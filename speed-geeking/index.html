@@ -1,0 +1,66 @@
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>iNaturalist Observations 2025</title>
+
+    <!-- Calcite import -->
+    <script type="module" src="https://js.arcgis.com/calcite-components/3.0.3/calcite.esm.js"></script>
+
+    <!-- ArcGIS Maps SDK for JavaScript imports -->
+    <script src="https://js.arcgis.com/4.32/"></script>
+    <link id="jsapi-mode-light" rel="stylesheet" href="https://js.arcgis.com/4.32/esri/themes/light/main.css" />
+    <link disabled id="jsapi-mode-dark" rel="stylesheet" href="https://js.arcgis.com/4.32/esri/themes/dark/main.css" />
+    <script type="module" src="https://js.arcgis.com/map-components/4.32/arcgis-map-components.esm.js"></script>
+
+    <!-- Demo imports -->
+    <script src="./app.js" defer></script>
+    <link rel="stylesheet" href="./style.css" />
+</head>
+
+<body>
+    <calcite-shell content-behind>
+
+        <calcite-navigation slot="header" id="nav">
+
+            <calcite-navigation-logo href="#"
+                thumbnail="https://static.inaturalist.org/wiki_page_attachments/3154-original.png"
+                alt="Application logo" slot="logo" heading="iNaturalist"
+                description="2025 Observations"></calcite-navigation-logo>
+            <calcite-action-pad layout="horizontal" expand-disabled slot="content-end">
+                <calcite-action id="toggle-mode" text="Toggle mode" icon="brightness"></calcite-action>
+            </calcite-action-pad>
+
+            <calcite-tooltip placement="bottom" reference-element="toggle-mode" slot="content-end">Toggle
+                mode</calcite-tooltip>
+
+        </calcite-navigation>
+
+        <calcite-shell-panel resizable slot="panel-end" display-mode="docked" width="l">
+            <calcite-panel scale="l" heading="Details"
+                description="Search for a location then click on map to view observation details">
+                <arcgis-search reference-element="map"></arcgis-search>
+                <arcgis-features reference-element="map"></arcgis-features>
+            </calcite-panel>
+        </calcite-shell-panel>
+
+        <arcgis-map popup-disabled="true" id="map" item-id="4eb84af574c348dba3d8378c205dcb1b">
+
+            <arcgis-expand group="top-left" position="top-left">
+                <arcgis-legend></arcgis-legend>
+            </arcgis-expand>
+            <arcgis-expand group="top-left" position="top-left">
+                <arcgis-bookmarks></arcgis-bookmarks>
+            </arcgis-expand>
+
+            <arcgis-home position="top-left"></arcgis-home>
+
+        </arcgis-map>
+    </calcite-shell>
+
+
+
+</body>
+
+</html>
