@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no" />
+    <title>Load a basic WebMap | Sample | ArcGIS Maps SDK for JavaScript 4.33</title>
+
+    <style>
+        html,
+        body,
+        #viewDiv {
+            padding: 0;
+            margin: 0;
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+
+    <link rel="stylesheet" href="https://js.arcgis.com/4.33/esri/themes/light/main.css" />
+
+    <script src="https://js.arcgis.com/4.33/"></script>
+
+    <script type="module">
+        const [MapView, WebMap] = await $arcgis.import([
+            "@arcgis/core/views/MapView.js",
+            "@arcgis/core/WebMap.js",
+        ]);
+
+
+        const webmap = new WebMap({
+            portalItem: {
+                // autocasts as new PortalItem()
+                id: "70c447b0b5a54d9a82e81de4d7cbd08c",
+            },
+        });
+
+        const view = new MapView({
+            map: webmap,
+            container: "viewDiv",
+        });
+    </script>
+</head>
+
+<body>
+    <div id="viewDiv"></div>
+</body>
+
+</html>
