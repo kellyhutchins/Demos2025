@@ -1,0 +1,70 @@
+html, body, {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+body{
+  background-color: #fff;
+}
+
+.date-text{
+  font-family:'Avenir Next W01', 'Avenir Next', Avenir, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:14px;
+  line-height: 20px;
+  padding-right:.4em;
+  margin-top:.5em;
+}
+.app-panel{
+  border: none;
+  padding:1.5em;
+  margin:.5em;
+}
+.page-header{
+  margin: 10px 0 5px;
+  padding-bottom:0;
+}
+.page-header h2{
+  margin-left: .5em;
+}
+#loader{
+  position: absolute;
+  top:50%;
+  left:45%;
+  vertical-align: center;
+  text-align: center;
+  font-size: 84px;
+  color:#28a4c9;
+}
+.hide{
+  display:none;
+}
+.info{
+  font-family:'Avenir Next W01', 'Avenir Next', Avenir, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size:14px;
+  line-height: 20px;
+}
+.count{
+  font-weight: bold;
+}
+.well{
+  margin-top: 1em;
+  background-image:none;
+}
+#templateInfo{
+  margin-top: 1em;
+}
+.form-control{
+  width:auto;
+  display:inline;
+  margin-left: .5em;
+  margin-bottom: 1em;
+}
+#templateDetailTable.dgrid{
+  height:40em;
+}
+a:visited{
+ color: #2196F3;
+}
+a:{
+color:#00BCD4;
+}

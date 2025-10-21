@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no" />
+  <title>Template Details</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"
+    integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css"
+    integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://js.arcgis.com/3.27/esri/themes/calcite/dijit/calcite.css">
+  <link rel="stylesheet" href="https://js.arcgis.com/3.27/esri/css/esri.css">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://js.arcgis.com/3.27/" data-dojo-config="parseOnLoad:true"></script>
+  <script src="js/main.js"></script>
+
+</head>
+
+<body class="calcite">
+  <i id="loader" class="fa fa-spinner fa-spin"></i>
+  <div class="page-header">
+    <h2>ArcGIS Online Mining: <small>Public template details</small> </h2>
+  </div>
+  <div class="app-panel">
+
+    <span class="date-text">Select a template</span><select class="form-control" id="templateTypes"></select>
+    <br>
+    <span class="date-text">Get count of selected template created in the last</span>
+    <div class="btn-group btn-group-sm" role="group" aria-label="date buttons">
+      <button type="button" data-duration="hour" class="btn btn-info btn-date">Hour</button>
+      <button type="button" data-duration="day" class="btn btn-info btn-date">Day</button>
+      <button type="button" data-duration="week" class="btn btn-info btn-date">Week</button>
+      <button type="button" data-duration="month" class="btn btn-info btn-date">Month</button>
+      <button type="button" data-duration="year" class="btn btn-info btn-date">Year</button>
+    </div>
+    <div class="date-text">Or specify a custom date/time period</div>
+    <label for="startDate">Start:</label>
+    <input type="datetime-local" id="startDate" name="Start Date" />
+    <label for="endDate">End:</label>
+    <input type="datetime-local" id="endDate" name="End Date" />
+    <button id="goDates" type="button" class="btn btn-sm btn-info">Go</button>
+
+    <div id="templateInfo" class="info">
+      <div id="templateCountInfo"></div>
+    </div>
+    <div id="templateDetailTable"></div>
+  </div>
+</body>
+
+</html>
