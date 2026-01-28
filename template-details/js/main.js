@@ -58,9 +58,26 @@ require([
         label: "Basic"
       },
       {
+        id: "instant/charts",
+        label: "Chart Viewer"
+      },
+      {
+        id: "instant/compare",
+        label: "Compare"
+      },
+      {
+        id: "instant/countdown",
+        label: "Countdown"
+      },
+      {
         id: "instant/filtergallery",
         label: "Category Gallery"
-      }, {
+      },
+      {
+        id: "instant/exhibit",
+        label: "Exhibit"
+      },
+      {
         id: "instant/gallery",
         label: "Gallery"
       }, {
