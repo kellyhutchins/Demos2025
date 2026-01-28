@@ -39,7 +39,6 @@ require([
   EsriLang
 ) {
   ready(function () {
-    esriConfig.apiKey = "AAPTxy8BH1VEsoebNVZXo8HurPtbrhTUJ1U4IFjTvcTHxviXfWYGo1M2-sC-woTWkyTC4WJTOJjY2chJ2hnoLSGkQR9kBv7AFGvsnTOQsuvMTw630eDi0NaiFOzAFvOIciO7_mFQCMYrZZl4KCsyELagvU0FzYgU57OY3yVvCFB3jYfwacV1sKaBFLYKmLHUYTIMaXKFn6qlK7lcu4nQtqN454feGvu-pM3tbwshqVUPTOE.AT1_hi1kLPfU"
     // Prepopulate the template dropdown list
 
     var templates = [
