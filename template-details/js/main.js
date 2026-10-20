@@ -69,8 +69,8 @@ require([
         label: "Countdown"
       },
       {
-        id: "instant/filtergallery",
-        label: "Category Gallery"
+        id: "instant/dataexplorer",
+        label: "Data Explorer"
       },
       {
         id: "instant/exhibit",
@@ -82,6 +82,10 @@ require([
       }, {
         id: "instant/imageryviewer",
         label: "Imagery Viewer"
+      },
+      {
+        id: "instant/indicators",
+        label: "Indicators"
       },
       {
         id: "instant/insets",

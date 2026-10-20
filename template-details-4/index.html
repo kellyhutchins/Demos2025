@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no">
+    <title>Template Details (ArcGIS JS API 4.x)</title>
+    <link rel="stylesheet" href="https://js.arcgis.com/4.28/esri/themes/light/main.css">
+    <link rel="stylesheet" href="./css/styles.css">
+    <script>
+        var esriConfig = {
+            apiKey: "AAPTxy8BH1VEsoebNVZXo8HurPtbrhTUJ1U4IFjTvcTHxviXfWYGo1M2-sC-woTWkyTC4WJTOJjY2chJ2hnoLSGkQR9kBv7AFGvsnTOQsuvMTw630eDi0NaiFOzAFvOIciO7_mFQCMYrZZl4KCsyELagvU0FzYgU57OY3yVvCFB3jYfwacV1sKaBFLYKmLHUYTIMaXKFn6qlK7lcu4nQtqN454feGvu-pM3tbwshqVUPTOE.AT1_hi1kLPfU",
+        };
+    </script>
+</head>
+
+<body>
+    <div class="page-header">
+        <h2>ArcGIS Online Mining: <small>Public template details (4.x)</small></h2>
+    </div>
+    <div class="app-panel">
+        <span class="date-text">Select a template</span>
+        <select class="form-control" id="templateTypes"></select>
+        <br>
+        <span class="date-text">Get count of selected template created in the last</span>
+        <div class="btn-group btn-group-sm" role="group" aria-label="date buttons">
+            <button type="button" data-duration="hour" class="btn btn-info btn-date">Hour</button>
+            <button type="button" data-duration="day" class="btn btn-info btn-date">Day</button>
+            <button type="button" data-duration="week" class="btn btn-info btn-date">Week</button>
+            <button type="button" data-duration="month" class="btn btn-info btn-date">Month</button>
+            <button type="button" data-duration="year" class="btn btn-info btn-date">Year</button>
+        </div>
+        <div class="date-text">Or specify a custom date/time period</div>
+        <label for="startDate">Start:</label>
+        <input type="datetime-local" id="startDate" name="Start Date" />
+        <label for="endDate">End:</label>
+        <input type="datetime-local" id="endDate" name="End Date" />
+        <button id="goDates" type="button" class="btn btn-sm btn-info">Go</button>
+        <div id="templateInfo" class="info">
+            <div id="templateCountInfo"></div>
+        </div>
+        <div id="templateDetailTable"></div>
+    </div>
+    <script src="https://js.arcgis.com/4.28/"></script>
+
+    <script src="js/main.js"></script>
+</body>
+
+</html>
