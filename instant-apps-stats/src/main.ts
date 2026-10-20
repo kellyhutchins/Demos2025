@@ -49,13 +49,6 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             <div slot="message" id="notice-message"></div>
           </calcite-notice>
         </calcite-block>
-        <calcite-block heading="Results" collapsible expanded>
-          <p id="result-summary" aria-live="polite">Run a report to find Instant Apps.</p>
-          <div id="results" aria-label="Matching apps" tabindex="0"></div>
-          <calcite-button id="show-more" appearance="outline" width="full" hidden>
-            Show more apps
-          </calcite-button>
-        </calcite-block>
         <calcite-block heading="Chart Options" collapsible expanded>
           <div class="chart-question">
             How many apps have
@@ -73,6 +66,14 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             template-specific alternate keys. Each app counts once per feature.
             Template defaults and unreadable configurations are not counted.</p>
         </calcite-block>
+        <calcite-block heading="Results" collapsible expanded>
+          <p id="result-summary" aria-live="polite">Run a report to find Instant Apps.</p>
+          <div id="results" aria-label="Matching apps" tabindex="0"></div>
+          <calcite-button id="show-more" appearance="outline" width="full" hidden>
+            Show more apps
+          </calcite-button>
+        </calcite-block>
+  
       </calcite-panel>
     </calcite-shell-panel>
     <calcite-panel heading="Stats" id="stats-panel">
