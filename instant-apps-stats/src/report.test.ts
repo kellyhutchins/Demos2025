@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { aggregate, dateBounds, defaultRange, FEATURES, isFeatureEnabled, templateFor } from "./report";
+import { aggregate, dateBounds, defaultRange, FEATURES, isFeatureEnabled, templateFor, templateLabel, TEMPLATES } from "./report";
 import type { AppConfiguration, FeatureDefinition } from "./report";
 
 describe("date ranges", () => {
@@ -38,6 +38,21 @@ describe("date ranges", () => {
 });
 
 describe("template identification", () => {
+  it.each(TEMPLATES)("keeps the $key path independent of its $label display label", ({ key, label }) => {
+    expect(templateLabel(key)).toBe(label);
+    expect(templateFor({ url: `/apps/instant/${key}/index.html` })).toBe(key);
+    expect(templateFor({ typeKeywords: [key.toUpperCase()] })).toBe(key);
+  });
+
+  it("uses friendly names and preserves unrecognized template paths", () => {
+    expect(templateLabel("basic")).toBe("Minimalist");
+    expect(templateLabel("attachmentviewer")).toBe("Attachment Viewer");
+    expect(templateLabel("unknown")).toBe("Unknown");
+    expect(templateLabel("future-template")).toBe("future-template");
+    expect(templateFor({ typeKeywords: ["Minimalist"] })).toBe("unknown");
+    expect(new Set(TEMPLATES.map(({ key }) => key)).size).toBe(TEMPLATES.length);
+  });
+
   it("reads a template from absolute and relative app URLs", () => {
     expect(templateFor({ url: "https://example.maps.arcgis.com/apps/instant/sidebar/index.html?appid=123" })).toBe("sidebar");
     expect(templateFor({ url: "/apps/instant/basic/index.html" })).toBe("basic");

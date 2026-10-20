@@ -33,12 +33,37 @@ export const FEATURES = [
 export type FeatureKey = (typeof FEATURES)[number]["key"];
 
 export const TEMPLATES = [
-  "countdown", "charts", "notification", "manager", "imageryviewer",
-  "streamflowviewer", "gallery", "exhibit", "media", "webeditor","observer",
-  "lookup", "slider", "atlas", "reporter", "attachmentviewer", "portfolio",
-  "nearby", "compare", "insets", "3dviewer", "interactivelegend", "sidebar",
-  "basic", "dataexplorer",
+  { key: "countdown", label: "Countdown" },
+  { key: "charts", label: "Charts" },
+  { key: "notification", label: "Notification" },
+  { key: "manager", label: "Manager" },
+  { key: "imageryviewer", label: "Imagery Viewer" },
+  { key: "streamflowviewer", label: "Streamflow Viewer" },
+  { key: "gallery", label: "Category Gallery" },
+  { key: "exhibit", label: "Exhibit" },
+  { key: "media", label: "Media Map" },
+  { key: "webeditor", label: "Web Editor" },
+  { key: "observer", label: "Observer" },
+  { key: "lookup", label: "Zone Lookup" },
+  { key: "slider", label: "Slider" },
+  { key: "atlas", label: "Atlas" },
+  { key: "reporter", label: "Reporter" },
+  { key: "attachmentviewer", label: "Attachment Viewer" },
+  { key: "portfolio", label: "Portfolio" },
+  { key: "nearby", label: "Nearby" },
+  { key: "compare", label: "Compare" },
+  { key: "insets", label: "Insets" },
+  { key: "3dviewer", label: "3D Viewer" },
+  { key: "interactivelegend", label: "Interactive Legend" },
+  { key: "sidebar", label: "Sidebar" },
+  { key: "basic", label: "Minimalist" },
+  { key: "dataexplorer", label: "Data Explorer" },
 ] as const;
+
+export function templateLabel(template: string): string {
+  return TEMPLATES.find(({ key }) => key === template)?.label ??
+    (template === "unknown" ? "Unknown" : template);
+}
 
 export interface AppItem {
   id: string;
@@ -119,7 +144,7 @@ export function templateFor(item: Record<string, unknown>): string {
       if (typeof keyword !== "string") continue;
       const source = keyword.match(/^sourceId#instant_app_([a-z0-9-]+)$/i);
       if (source) return source[1].toLowerCase();
-      if (TEMPLATES.some((template) => template === keyword.toLowerCase())) {
+      if (TEMPLATES.some(({ key }) => key === keyword.toLowerCase())) {
         return keyword.toLowerCase();
       }
     }
@@ -139,7 +164,7 @@ export function isFeatureEnabled(
 export function aggregate(apps: AppConfiguration[], feature: FeatureKey): ChartRow[] {
   const definition = FEATURES.find(({ key }) => key === feature)!;
   const rows = new Map<string, ChartRow>(
-    TEMPLATES.map((template) => [template, { template, count: 0, total: 0 }]),
+    TEMPLATES.map(({ key }) => [key, { template: key, count: 0, total: 0 }]),
   );
   for (const app of apps) {
     if (app.values === null) continue;

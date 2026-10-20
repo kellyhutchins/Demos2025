@@ -21,22 +21,18 @@ require([
   "dojo/domReady!"
 ], function (
   moment,
-  parser,
+
   ready,
   on, dom,
   domClass,
   domConstruct,
   query,
   array,
-  Deferred,
-  all,
   FeatureLayer,
   esriConfig,
   Grid,
   Memory,
   QueryTask,
-  urlUtils,
-  EsriLang
 ) {
   ready(function () {
     // Prepopulate the template dropdown list

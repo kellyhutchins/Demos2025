@@ -18,7 +18,7 @@ import "@esri/calcite-components/calcite/calcite.css";
 import "./style.css";
 import { errorMessage, loadConfigurations, searchApps } from "./arcgis";
 import { renderChart } from "./chart";
-import { aggregate, defaultRange, FEATURES, formatDate, isFeatureEnabled } from "./report";
+import { aggregate, FEATURES, formatDate, isFeatureEnabled, templateLabel } from "./report";
 import type { AppConfiguration, AppItem, FeatureKey } from "./report";
 
 setAssetPath(`${import.meta.env.BASE_URL}calcite/`);
@@ -79,7 +79,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <main id="stats-content" aria-label="Configuration statistics">
         <div id="empty-state">
           <h1>Instant Apps configuration usage</h1>
-          <p>Run a report to see enabled options by app template.</p>
+          <p>Choose a start and end date, then select Run Report to see enabled options by app template.</p>
         </div>
         <p id="selection-empty" role="status" hidden>Select one or more configuration options to view charts.</p>
         <calcite-tabs id="chart-tabs" hidden></calcite-tabs>
@@ -115,9 +115,6 @@ let reportReady = false;
 let configurations: AppConfiguration[] = [];
 let renderedCount = 0;
 let controller: AbortController | undefined;
-
-const initialRange = defaultRange();
-datePicker.value = [initialRange.start, initialRange.end];
 
 function showNotice(title: string, message: string, kind: "danger" | "warning" | "info"): void {
   notice.kind = kind;
@@ -233,7 +230,7 @@ function updateCharts(): void {
       const tr = document.createElement("tr");
       const name = document.createElement("th");
       name.scope = "row";
-      name.textContent = row.template;
+      name.textContent = templateLabel(row.template);
       tr.append(name);
       const enabledCell = document.createElement("td");
       enabledCell.className = "enabled-apps";
@@ -245,7 +242,7 @@ function updateCharts(): void {
         const appDetails = document.createElement("details");
         const appSummary = document.createElement("summary");
         appSummary.textContent = `${row.count.toLocaleString()} apps`;
-        appSummary.setAttribute("aria-label", `View ${row.count.toLocaleString()} ${row.template} apps with ${feature.label} enabled`);
+        appSummary.setAttribute("aria-label", `View ${row.count.toLocaleString()} ${templateLabel(row.template)} apps with ${feature.label} enabled`);
         appDetails.append(appSummary);
         appDetails.addEventListener("toggle", () => {
           if (!appDetails.open || appDetails.querySelector("ul")) return;
@@ -355,4 +352,3 @@ featureSelector.addEventListener("calciteComboboxChange", () => {
   selectedFeatures = FEATURES.filter((feature) => keys.has(feature.key)).map((feature) => feature.key);
   updateCharts();
 });
-void runReport();

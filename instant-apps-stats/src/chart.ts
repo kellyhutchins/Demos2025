@@ -1,4 +1,5 @@
 import type { ChartRow, FeatureKey } from "./report";
+import { templateLabel } from "./report";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -14,7 +15,7 @@ function svgElement<K extends keyof SVGElementTagNameMap>(
 }
 
 export function renderChart(host: HTMLElement, rows: ChartRow[], feature: FeatureKey, label: string): void {
-  const left = 154;
+  const left = 190;
   const top = 18;
   const plotWidth = 340;
   const rowHeight = 21;
@@ -27,26 +28,26 @@ export function renderChart(host: HTMLElement, rows: ChartRow[], feature: Featur
   const titleId = `chart-title-${feature}`;
   const descriptionId = `chart-description-${feature}`;
   const svg = svgElement("svg", {
-    viewBox: `0 0 550 ${plotHeight + 90}`,
+    viewBox: `0 0 586 ${plotHeight + 90}`,
     role: "img",
     "aria-labelledby": `${titleId} ${descriptionId}`,
   });
   svg.append(
     svgElement("title", { id: titleId }, `${label} enabled by template`),
     svgElement("desc", { id: descriptionId },
-      rows.map((row) => `${row.template}: ${row.count} of ${row.total} readable apps`).join(". ")),
+      rows.map((row) => `${templateLabel(row.template)}: ${row.count} of ${row.total} readable apps`).join(". ")),
   );
   rows.forEach((row, index) => {
     const y = top + index * rowHeight;
     svg.append(
-      svgElement("text", { x: left - 12, y: y + 4, "text-anchor": "end" }, row.template),
+      svgElement("text", { x: left - 12, y: y + 4, "text-anchor": "end" }, templateLabel(row.template)),
       svgElement("line", { x1: left, x2: left + plotWidth, y1: y, y2: y, class: "chart-guide" }),
     );
     if (row.count > 0) {
       const bar = svgElement("rect", {
         x: left, y: y - 7, width: (row.count / upper) * plotWidth, height: 14, class: "chart-bar",
       });
-      bar.append(svgElement("title", {}, `${row.template}: ${row.count} of ${row.total} apps`));
+      bar.append(svgElement("title", {}, `${templateLabel(row.template)}: ${row.count} of ${row.total} apps`));
       svg.append(
         bar,
         svgElement("text", {
