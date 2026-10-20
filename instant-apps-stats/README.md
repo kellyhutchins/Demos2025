@@ -25,6 +25,24 @@ npm run preview
 
 Deploy the generated `dist/` directory to any static host. Calcite icons, translations, and fonts are copied locally before development and production builds; no Calcite CDN is required.
 
+### GitHub Pages
+
+This repository's [Pages workflow](../.github/workflows/pages.yml) builds and
+publishes this app at `/Demos2025/instant-apps-stats/`, alongside the static demos.
+Select **GitHub Actions** as the Pages source in repository settings; see the
+[repository deployment instructions](../README.md#github-pages).
+
+The workflow passes the Pages subfolder as Vite's `--base` option. To reproduce
+the project-site build locally:
+
+```sh
+npm run build -- --base=/Demos2025/instant-apps-stats/
+npm run preview -- --base=/Demos2025/instant-apps-stats/
+```
+
+Open `/Demos2025/instant-apps-stats/` on the preview server. Do not publish the
+source `index.html` directly: browsers cannot run its TypeScript entry point.
+
 ## Report behavior
 
 - Queries the same public [TemplateAppMining dataset](https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/TemplateAppMining_1/FeatureServer/0) as the original report, using `Url like '%/instant/%'` and `CreatedTime`. This is not the ArcGIS item keyword search, which omits many apps in the mining dataset. No login, client ID, access token, or backend is required.
