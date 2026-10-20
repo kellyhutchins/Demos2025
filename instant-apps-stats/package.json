@@ -1,0 +1,23 @@
+{
+  "name": "instant-apps-config-stats",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "assets": "node scripts/copy-calcite-assets.mjs",
+    "predev": "npm run assets",
+    "dev": "vite --host 127.0.0.1",
+    "prebuild": "npm run assets",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@esri/calcite-components": "^3.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.1.7",
+    "vitest": "^5.0.5"
+  }
+}
