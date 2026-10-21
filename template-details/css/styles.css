@@ -1,70 +1,92 @@
-html, body, {
-  height: 100%;
+html, body {
+  min-height: 100%;
   margin: 0;
-  padding: 0;
-}
-body{
-  background-color: #fff;
 }
 
-.date-text{
-  font-family:'Avenir Next W01', 'Avenir Next', Avenir, 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size:14px;
-  line-height: 20px;
-  padding-right:.4em;
-  margin-top:.5em;
+body {
+  background: var(--calcite-color-background);
+  color: var(--calcite-color-text-1);
+  font-family: var(--calcite-font-family);
 }
-.app-panel{
-  border: none;
-  padding:1.5em;
-  margin:.5em;
+
+.app-panel {
+  padding: 1.5rem;
 }
-.page-header{
-  margin: 10px 0 5px;
-  padding-bottom:0;
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 500;
 }
-.page-header h2{
-  margin-left: .5em;
+
+h1 small {
+  color: var(--calcite-color-text-2);
 }
-#loader{
-  position: absolute;
-  top:50%;
-  left:45%;
-  vertical-align: center;
-  text-align: center;
-  font-size: 84px;
-  color:#28a4c9;
+
+calcite-select {
+  max-width: 24rem;
 }
-.hide{
-  display:none;
+
+.date-buttons, .custom-dates {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.5rem;
 }
-.info{
-  font-family:'Avenir Next W01', 'Avenir Next', Avenir, 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  font-size:14px;
-  line-height: 20px;
+
+.custom-dates {
+  align-items: flex-end;
 }
-.count{
-  font-weight: bold;
+
+.custom-dates calcite-label {
+  margin-bottom: 0;
 }
-.well{
-  margin-top: 1em;
-  background-image:none;
+
+input {
+  box-sizing: border-box;
+  min-height: 2rem;
+  padding: 0.25rem;
+  font: inherit;
+  color: var(--calcite-color-text-1);
+  background: var(--calcite-color-foreground-1);
+  border: 1px solid var(--calcite-color-border-input);
 }
-#templateInfo{
-  margin-top: 1em;
+
+calcite-loader, calcite-notice {
+  margin-top: 1rem;
 }
-.form-control{
-  width:auto;
-  display:inline;
-  margin-left: .5em;
-  margin-bottom: 1em;
+
+[hidden] {
+  display: none !important;
 }
-#templateDetailTable.dgrid{
-  height:40em;
+
+.table-container {
+  max-height: 40rem;
+  overflow: auto;
 }
-a:visited{
- color: #2196F3;
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--calcite-color-foreground-1);
 }
-a:{
-color:#00BCD4;
+
+caption {
+  text-align: left;
+  padding-block: 0.5rem;
+}
+
+th, td {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--calcite-color-border-3);
+  text-align: left;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  background: var(--calcite-color-foreground-2);
+}
+
+a {
+  color: var(--calcite-color-brand);
 }
