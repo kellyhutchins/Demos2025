@@ -26,7 +26,9 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: instant-apps-stats/package-lock.json
+          cache-dependency-path: |
+            instant-apps-stats/package-lock.json
+            template-details/package-lock.json
 
       - name: Configure Pages
         id: pages
@@ -42,11 +44,20 @@ jobs:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
         run: npm run build -- --base="${PAGES_BASE_PATH}/instant-apps-stats/"
 
+      - name: Install Template Details dependencies
+        working-directory: template-details
+        run: npm ci
+
+      - name: Build Template Details
+        working-directory: template-details
+        run: npm run build
+
       - name: Assemble site
         run: |
           mkdir _site
           cp index.html map.html embed.html _site/
-          cp -R template-details template-details-4 speed-geeking _site/
+          cp -R template-details-4 speed-geeking _site/
+          cp -R template-details/dist _site/template-details
           cp -R instant-apps-stats/dist _site/instant-apps-stats
 
       - name: Upload Pages artifact
