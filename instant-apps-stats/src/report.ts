@@ -56,7 +56,7 @@ export const TEMPLATES = [
   { key: "3dviewer", label: "3D Viewer" },
   { key: "interactivelegend", label: "Interactive Legend" },
   { key: "sidebar", label: "Sidebar" },
-  { key: "basic", label: "Minimalist" },
+  { key: "basic", label: "Basic" },
   { key: "dataexplorer", label: "Data Explorer" },
 ] as const;
 
