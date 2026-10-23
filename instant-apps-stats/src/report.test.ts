@@ -45,7 +45,7 @@ describe("template identification", () => {
   });
 
   it("uses friendly names and preserves unrecognized template paths", () => {
-    expect(templateLabel("basic")).toBe("Minimalist");
+    expect(templateLabel("basic")).toBe("Basic");
     expect(templateLabel("attachmentviewer")).toBe("Attachment Viewer");
     expect(templateLabel("unknown")).toBe("Unknown");
     expect(templateLabel("future-template")).toBe("future-template");
