@@ -56,7 +56,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html map.html embed.html _site/
-          cp -R template-details-4 speed-geeking _site/
+          cp -R archive/template-details-4 archive/speed-geeking _site/
           cp -R template-details/dist _site/template-details
           cp -R instant-apps-stats/dist _site/instant-apps-stats
 
