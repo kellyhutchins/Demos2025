@@ -18,6 +18,7 @@ import "@esri/calcite-components/calcite/calcite.css";
 import "./style.css";
 import { errorMessage, loadConfigurations, searchApps } from "./arcgis";
 import { renderChart, renderChoiceChart } from "./chart";
+import { renderTheming } from "./theme";
 import { aggregate, aggregateChoices, choiceLabel, FEATURES, formatDate, getFeatureChoice, matchesFeature, queryTemplateForFeatures, templateLabel } from "./report";
 import type { AppConfiguration, AppItem, FeatureDefinition, FeatureKey, QueryTemplate } from "./report";
 
@@ -69,6 +70,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             "Features within a zone" instead of the "For a zone" default.
             Select either search method alone before running to fetch only its app template.
             Mixed selections fetch all templates.
+            Theming compares saved color mode, preset/shared theme use, and logo options across all templates.
             Missing settings and unreadable configurations are not counted as matches.</p>
         </calcite-block>
         <calcite-block heading="Results" collapsible expanded>
@@ -225,6 +227,13 @@ function updateCharts(): void {
     const content = document.createElement("section");
     content.className = "feature-chart";
     content.dataset.feature = key;
+    panel.append(content);
+    fragment.append(panel);
+    if (feature.type === "theming") {
+      content.classList.add("theming-report");
+      renderTheming(content, configurations, appLink);
+      continue;
+    }
     const chartSummary = document.createElement("p");
     chartSummary.className = "chart-summary";
     const details = document.createElement("details");
@@ -239,8 +248,6 @@ function updateCharts(): void {
     const chartRows = document.createElement("tbody");
     table.append(caption, head, chartRows);
     details.append(summary, table);
-    panel.append(content);
-    fragment.append(panel);
     const rows = aggregate(configurations, key);
     const enabled = rows.reduce((sum, row) => sum + row.count, 0);
     const readable = rows.reduce((sum, row) => sum + row.total, 0);

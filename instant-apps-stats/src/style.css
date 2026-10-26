@@ -351,6 +351,37 @@ tbody th {
   font-size: 12px;
 }
 
+.theming-report > table {
+  max-width: 700px;
+  font-size: 13px;
+}
+
+.theme-share {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.theme-share meter {
+  width: 100px;
+  max-width: 100%;
+}
+
+.theme-logo-data {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.theme-logo-data td {
+  min-width: 100px;
+  max-width: 250px;
+  overflow-wrap: anywhere;
+  text-align: left;
+  vertical-align: top;
+}
+
 @media (max-width: 700px) {
   #app-layout {
     display: block;

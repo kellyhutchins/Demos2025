@@ -56,6 +56,41 @@ are excluded from the donut; missing values are not inferred as **For a zone**.
 Labels are used consistently in the legend, tooltips, accessible description,
 distribution table, summaries, and app list.
 
+### Theming
+
+Select **Theming** in Chart Options to compare all templates in one tab.
+It always queries all Instant Apps templates when running a report. Adding
+Theming after a Nearby-only or Lookup-only report prompts you to run again
+before showing counts.
+
+The tab reads color mode from `values.theme` and the other settings from
+`values.customTheme`:
+
+- **Color mode**: `values.theme` must be exactly `light` or `dark`, independently
+  of whether `customTheme` is saved. Nested `customTheme.theme` is not used.
+- **Preset theme applied**: `applyPresetTheme` must be boolean `true` or `false`.
+  An additional table groups `preset` names only for apps explicitly applying
+  a preset; a saved preset name alone does not count as applied.
+- **Shared theme used**: `applySharedTheme` must be boolean `true` or `false`.
+- **Logo configured**: a non-empty `logo` string/object or `logoUrl` string
+  counts as a logo. Explicitly empty strings or `null` count as no logo when
+  neither field contains a non-empty or malformed value. Saved logo options
+  alone do not count as a configured logo.
+
+Color mode reports only **Light** and **Dark**; preset, shared-theme, and logo
+metrics report only recognized **Yes** and **No** values. Missing/unrecognized
+values are excluded from each metric's rows, app lists, and percentage denominator.
+Applied preset names omit missing or empty names. Each metric includes counts,
+percentage bars, and expandable app lists. Unreadable configurations are excluded. Defaults
+and runtime appearance are not inferred. Shared theme counts indicate the saved
+flag, not whether organization theme resources were successfully loaded.
+
+**View logo options** lists only apps with configured logos, showing each app's
+template and saved `logo`, `logoSource`, `logoUrl`, `logoAltText`, `logoLink`,
+`logoScale`, and `logoAspectRatio`. Values are displayed as text, not loaded as
+images or interpreted as HTML. Quoted empty strings, `null`, and **Not saved**
+remain distinguishable. The options table scrolls horizontally on narrow screens.
+
 The Stats area scrolls within the selected chart tab, keeping the tabs visible
 when chart data or app lists are expanded. On narrow screens, scroll down to
 the Stats area, then scroll its chart content independently.

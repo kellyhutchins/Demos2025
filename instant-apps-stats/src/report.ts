@@ -18,7 +18,11 @@ interface ChoiceFeatureDefinition {
   defaultValue: string;
 }
 
-export type FeatureDefinition = BooleanFeatureDefinition | ChoiceFeatureDefinition;
+export type FeatureDefinition = BooleanFeatureDefinition | ChoiceFeatureDefinition | {
+  key: "customTheme";
+  label: string;
+  type: "theming";
+};
 
 export const FEATURES = [
   { key: "enableFilter", label: "Attribute Filter" },
@@ -65,6 +69,7 @@ export const FEATURES = [
   { key: "search", label: "Search" },
   {key: "sketch", label: "Sketch"},
   { key: "swipe", label: "Swipe" },
+  { key: "customTheme", label: "Theming", type: "theming" },
   {key:"time", label:"Time"}
 ] as const satisfies readonly FeatureDefinition[];
 
@@ -229,6 +234,7 @@ export function matchesFeature(
   template: string,
   feature: FeatureDefinition,
 ): boolean {
+  if (feature.type === "theming") return isRecord(values.customTheme);
   if (feature.type !== "choice") return isFeatureEnabled(values, template, feature);
   if (template !== feature.template) return false;
   const value = getFeatureChoice(values, feature);
