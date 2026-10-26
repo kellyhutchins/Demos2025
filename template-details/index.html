@@ -25,13 +25,13 @@
     </div>
     <p>Or specify a custom date/time period</p>
     <div class="custom-dates">
-      <calcite-label>Start
+      <calcite-label layout="inline">Start
         <input type="datetime-local" id="startDate" name="Start Date" required />
       </calcite-label>
-      <calcite-label>End
+      <calcite-label layout="inline">End
         <input type="datetime-local" id="endDate" name="End Date" required />
       </calcite-label>
-      <calcite-button id="goDates" type="button">Go</calcite-button>
+      <calcite-button id="goDates">Go</calcite-button>
     </div>
     <calcite-loader id="loader" label="Loading template details" hidden></calcite-loader>
     <calcite-notice id="queryError" kind="danger" icon="exclamation-mark-triangle">
@@ -43,7 +43,12 @@
       <table hidden>
         <caption>Template applications</caption>
         <thead>
-          <tr><th scope="col">Application URL</th><th scope="col">Configured</th><th scope="col">Account</th><th scope="col">Locale</th></tr>
+          <tr>
+            <th scope="col">Application URL</th>
+            <th scope="col">Configured</th>
+            <th scope="col">Account</th>
+            <th scope="col">Locale</th>
+          </tr>
         </thead>
         <tbody id="templateRows"></tbody>
       </table>

@@ -34,7 +34,7 @@ calcite-select {
 }
 
 .custom-dates {
-  align-items: flex-end;
+  align-items: baseline;
 }
 
 .custom-dates calcite-label {

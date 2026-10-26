@@ -52,6 +52,26 @@ describe("mining dataset queries", () => {
     });
   });
 
+  it("restricts the mining query to Nearby before loading configurations", async () => {
+    const nearbyFeature = feature(1);
+    nearbyFeature.attributes.Url = "https://www.arcgis.com/apps/instant/nearby/index.html?appid=" + item.id;
+    nearbyFeature.attributes.Type = "instant/nearby";
+    const fetcher = vi.fn()
+      .mockResolvedValueOnce(Response.json({ objectIds: [1] }))
+      .mockResolvedValueOnce(Response.json({ features: [nearbyFeature] }))
+      .mockResolvedValueOnce(Response.json({ values: {} }));
+    vi.stubGlobal("fetch", fetcher);
+    const result = await searchApps(range, new AbortController().signal, vi.fn(), "nearby");
+    expect(new URL(fetcher.mock.calls[0][0]).searchParams.get("where")).toBe(
+      "Url like '%/instant/nearby/%' AND (CreatedTime >= '1791849600000' AND CreatedTime <= '1792540800000')",
+    );
+    expect(result.items).toHaveLength(1);
+    expect(result.items[0].template).toBe("nearby");
+    await loadConfigurations(result.items, new AbortController().signal, vi.fn());
+    expect(fetcher).toHaveBeenCalledTimes(3);
+    expect(new URL(fetcher.mock.calls[2][0]).pathname).toBe(`/sharing/rest/content/items/${item.id}/data`);
+  });
+
   it("fetches every batch beyond 10,000 records, retaining separate mining records for the same app", async () => {
     const ids = Array.from({ length: 10001 }, (_, index) => index + 1);
     const fetcher = vi.fn(async (input: string) => {

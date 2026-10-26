@@ -144,6 +144,37 @@ calcite-input-date-picker {
   margin-top: 12px;
 }
 
+.donut-track,
+.donut-segment {
+  fill: none;
+  stroke-width: 32;
+}
+
+.donut-track {
+  stroke: var(--calcite-color-border-2);
+}
+
+.donut-segment.donut-primary {
+  stroke: #007ac2;
+}
+
+.donut-segment.donut-secondary {
+  stroke: #c45400;
+}
+
+.donut-key.donut-primary {
+  fill: #007ac2;
+}
+
+.donut-key.donut-secondary {
+  fill: #c45400;
+}
+
+.chart .donut-total {
+  font-size: 26px;
+  font-weight: 600;
+}
+
 .chart-question {
   display: flex;
   flex-wrap: wrap;

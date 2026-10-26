@@ -17,9 +17,9 @@ import "@esri/calcite-components/components/calcite-link";
 import "@esri/calcite-components/calcite/calcite.css";
 import "./style.css";
 import { errorMessage, loadConfigurations, searchApps } from "./arcgis";
-import { renderChart } from "./chart";
-import { aggregate, FEATURES, formatDate, isFeatureEnabled, templateLabel } from "./report";
-import type { AppConfiguration, AppItem, FeatureKey } from "./report";
+import { renderChart, renderChoiceChart } from "./chart";
+import { aggregate, aggregateChoices, FEATURES, formatDate, getFeatureChoice, matchesFeature, queryTemplateForFeatures, templateLabel } from "./report";
+import type { AppConfiguration, AppItem, FeatureDefinition, FeatureKey } from "./report";
 
 setAssetPath(`${import.meta.env.BASE_URL}calcite/`);
 
@@ -56,15 +56,18 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
               selection-mode="multiple" label="Configuration options"
               placeholder="Filter configuration options" max-items="8">
                 ${FEATURES.map((feature) => `
-                  <calcite-combobox-item value="${feature.key}" text-label="${feature.label}"
-                    ${feature.key === "basemapGallery" ? "selected" : ""}>
+                  <calcite-combobox-item value="${feature.key}" text-label="${feature.label}">
                   </calcite-combobox-item>`).join("")}
             </calcite-combobox>
-            enabled?
+            enabled or modified?
           </div>
           <p class="help">Counts explicitly saved <code>true</code> settings, including
             template-specific alternate keys. Each app counts once per feature.
-            Template defaults and unreadable configurations are not counted.</p>
+            Nearby Search Method counts only Nearby apps saving <code>search-radius</code>
+            instead of the <code>search-extent</code> default.
+            Select only Nearby Search Method before running to fetch only Nearby apps.
+            Mixed selections fetch all templates.
+            Missing settings and unreadable configurations are not counted as matches.</p>
         </calcite-block>
         <calcite-block heading="Results" collapsible expanded>
           <p id="result-summary" aria-live="polite">Run a report to find Instant Apps.</p>
@@ -80,7 +83,7 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
       <main id="stats-content" aria-label="Configuration statistics">
         <div id="empty-state">
           <h1>Instant Apps configuration usage</h1>
-          <p>Choose a start and end date, then select Run Report to see enabled options by app template.</p>
+          <p>Choose a start and end date, then select Run Report to see enabled or modified options by app template.</p>
         </div>
         <p id="selection-empty" role="status" hidden>Select one or more configuration options to view charts.</p>
         <calcite-tabs id="chart-tabs" hidden></calcite-tabs>
@@ -110,10 +113,11 @@ const emptyState = element("#empty-state");
 const chartTabs = element<HTMLElementTagNameMap["calcite-tabs"]>("#chart-tabs");
 const selectionEmpty = element("#selection-empty");
 
-let selectedFeatures: FeatureKey[] = ["basemapGallery"];
-let activeFeature: FeatureKey | undefined = "basemapGallery";
+let selectedFeatures: FeatureKey[] = [];
+let activeFeature: FeatureKey | undefined ;
 let reportReady = false;
 let configurations: AppConfiguration[] = [];
+let reportTemplate: "nearby" | undefined;
 let renderedCount = 0;
 let controller: AbortController | undefined;
 
@@ -177,6 +181,18 @@ function renderMoreResults(): void {
 }
 
 function updateCharts(): void {
+  if (reportReady) {
+    const needsBroaderData = reportTemplate === "nearby" &&
+      selectedFeatures.some((key) => key !== "enableBufferSearch");
+    emptyState.hidden = !needsBroaderData;
+    if (needsBroaderData) {
+      chartTabs.hidden = true;
+      selectionEmpty.hidden = true;
+      emptyState.querySelector("p")!.textContent =
+        "This report contains only Nearby apps. Select Run Report again to fetch all templates for your selected options.";
+      return;
+    }
+  }
   chartTabs.hidden = !reportReady || selectedFeatures.length === 0;
   selectionEmpty.hidden = !reportReady || selectedFeatures.length > 0;
   if (!reportReady) return;
@@ -191,7 +207,8 @@ function updateCharts(): void {
   nav.setAttribute("aria-label", "Selected configuration charts");
   fragment.append(nav);
   for (const key of selectedFeatures) {
-    const feature = FEATURES.find((entry) => entry.key === key)!;
+    const feature: FeatureDefinition = FEATURES.find((entry) => entry.key === key)!;
+    const state = feature.type === "choice" ? "modified" : "enabled";
     const title = document.createElement("calcite-tab-title");
     title.textContent = feature.label;
     title.tab = key;
@@ -203,8 +220,6 @@ function updateCharts(): void {
     const content = document.createElement("section");
     content.className = "feature-chart";
     content.dataset.feature = key;
-    const chart = document.createElement("div");
-    chart.className = "chart";
     const chartSummary = document.createElement("p");
     chartSummary.className = "chart-summary";
     const details = document.createElement("details");
@@ -215,18 +230,18 @@ function updateCharts(): void {
     const caption = document.createElement("caption");
     caption.textContent = `${feature.label} by template`;
     const head = document.createElement("thead");
-    head.innerHTML = '<tr><th scope="col">Template</th><th scope="col">Enabled</th><th scope="col">Readable apps</th></tr>';
+    head.innerHTML = `<tr><th scope="col">Template</th><th scope="col">${feature.type === "choice" ? "Modified" : "Enabled"}</th><th scope="col">Readable apps</th></tr>`;
     const chartRows = document.createElement("tbody");
     table.append(caption, head, chartRows);
     details.append(summary, table);
-    content.append(chart, chartSummary, details);
     panel.append(content);
     fragment.append(panel);
     const rows = aggregate(configurations, key);
-    renderChart(chart, rows, key, feature.label);
     const enabled = rows.reduce((sum, row) => sum + row.count, 0);
     const readable = rows.reduce((sum, row) => sum + row.total, 0);
-    chartSummary.textContent = `${enabled.toLocaleString()} of ${readable.toLocaleString()} readable apps have ${feature.label} explicitly enabled.`;
+    chartSummary.textContent = feature.type === "choice"
+      ? `${enabled.toLocaleString()} of ${readable.toLocaleString()} readable ${templateLabel(feature.template)} apps have ${feature.label} modified from the ${feature.defaultValue} default. Only recognized, explicitly saved non-default values count.`
+      : `${enabled.toLocaleString()} of ${readable.toLocaleString()} readable apps have ${feature.label} explicitly enabled.`;
     for (const row of rows) {
       const tr = document.createElement("tr");
       const name = document.createElement("th");
@@ -243,7 +258,7 @@ function updateCharts(): void {
         const appDetails = document.createElement("details");
         const appSummary = document.createElement("summary");
         appSummary.textContent = `${row.count.toLocaleString()} apps`;
-        appSummary.setAttribute("aria-label", `View ${row.count.toLocaleString()} ${templateLabel(row.template)} apps with ${feature.label} enabled`);
+        appSummary.setAttribute("aria-label", `View ${row.count.toLocaleString()} ${templateLabel(row.template)} apps with ${feature.label} ${state}`);
         appDetails.append(appSummary);
         appDetails.addEventListener("toggle", () => {
           if (!appDetails.open || appDetails.querySelector("ul")) return;
@@ -251,11 +266,13 @@ function updateCharts(): void {
           list.className = "enabled-app-list";
           for (const app of configurations) {
             if (app.values === null || app.item.template !== row.template ||
-              !isFeatureEnabled(app.values, row.template, feature)) continue;
+              !matchesFeature(app.values, row.template, feature)) continue;
             const entry = document.createElement("li");
             const status = document.createElement("span");
             status.className = "feature-status";
-            status.textContent = `${feature.label} enabled`;
+            status.textContent = feature.type === "choice"
+              ? `${feature.label}: ${getFeatureChoice(app.values, feature)} (modified)`
+              : `${feature.label} enabled`;
             entry.append(appLink(app.item, app.item.id), status);
             list.append(entry);
           }
@@ -265,6 +282,48 @@ function updateCharts(): void {
       }
       tr.append(enabledCell, appsCell);
       chartRows.append(tr);
+    }
+    if (feature.type === "choice") {
+      const choiceRows = aggregateChoices(configurations, feature);
+      const distributionHeading = document.createElement("h2");
+      distributionHeading.textContent = "Saved search-mode distribution";
+      const distributionChart = document.createElement("div");
+      distributionChart.className = "chart";
+      renderChoiceChart(distributionChart, choiceRows, feature);
+      const distributionSummary = document.createElement("p");
+      distributionSummary.className = "chart-summary";
+      const recognized = choiceRows.reduce((sum, row) => sum + row.count, 0);
+      distributionSummary.textContent = `${recognized.toLocaleString()} of ${readable.toLocaleString()} readable ${templateLabel(feature.template)} apps explicitly save a recognized search mode. Donut percentages use only these recognized saved choices. ${(readable - recognized).toLocaleString()} have a missing or unrecognized choice and are not shown as either mode. Missing values are not inferred as the default.`;
+      const distributionDetails = document.createElement("details");
+      distributionDetails.className = "chart-data";
+      const distributionToggle = document.createElement("summary");
+      distributionToggle.textContent = "View distribution data";
+      const distributionTable = document.createElement("table");
+      const distributionCaption = document.createElement("caption");
+      distributionCaption.textContent = `${feature.label}: explicitly saved choices`;
+      const distributionHead = document.createElement("thead");
+      distributionHead.innerHTML = '<tr><th scope="col">Saved search mode</th><th scope="col">Apps</th><th scope="col">Readable apps</th></tr>';
+      const distributionBody = document.createElement("tbody");
+      for (const row of choiceRows) {
+        const tr = document.createElement("tr");
+        const name = document.createElement("th");
+        name.scope = "row";
+        name.textContent = row.value === feature.defaultValue ? `${row.value} (default)` : row.value;
+        const count = document.createElement("td");
+        count.textContent = row.count.toLocaleString();
+        const total = document.createElement("td");
+        total.textContent = row.total.toLocaleString();
+        tr.append(name, count, total);
+        distributionBody.append(tr);
+      }
+      distributionTable.append(distributionCaption, distributionHead, distributionBody);
+      distributionDetails.append(distributionToggle, distributionTable);
+      content.append(distributionHeading, distributionChart, distributionSummary, distributionDetails, chartSummary, details);
+    } else {
+      const chart = document.createElement("div");
+      chart.className = "chart";
+      renderChart(chart, rows, feature);
+      content.append(chart, chartSummary, details);
     }
   }
   chartTabs.replaceChildren(fragment);
@@ -278,14 +337,17 @@ async function runReport(): Promise<void> {
     return;
   }
   const range = { start: dates[0], end: dates[1] };
+  const template = queryTemplateForFeatures(selectedFeatures);
+  const appScope = template === "nearby" ? "Nearby apps" : "Instant Apps";
   const current = new AbortController();
   controller = current;
   runButton.loading = true;
   runButton.disabled = true;
   datePicker.disabled = true;
+  featureSelector.disabled = true;
   cancelButton.hidden = false;
   progress.hidden = false;
-  progressText.textContent = "Finding Instant Apps in the mining dataset...";
+  progressText.textContent = `Finding ${appScope} in the mining dataset...`;
   notice.open = false;
   configurations = [];
   renderedCount = 0;
@@ -301,14 +363,15 @@ async function runReport(): Promise<void> {
   try {
     const search = await searchApps(range, current.signal, (count, total) => {
       progressText.textContent = `Found ${count.toLocaleString()} of ${total.toLocaleString()} apps...`;
-    });
+    }, template);
     progressText.textContent = `Reading 0 of ${search.items.length.toLocaleString()} configurations...`;
     configurations = await loadConfigurations(search.items, current.signal, (completed) => {
       progressText.textContent = `Reading ${completed.toLocaleString()} of ${search.items.length.toLocaleString()} configurations...`;
     });
     current.signal.throwIfAborted();
+    reportTemplate = template;
     const failures = configurations.filter((app) => app.values === null).length;
-    resultSummary.textContent = `${configurations.length.toLocaleString()} results returned for the selected date range of ${formatDate(range.start)} to ${formatDate(range.end)}.`;
+    resultSummary.textContent = `${configurations.length.toLocaleString()} ${template === "nearby" ? "Nearby app results" : "results"} returned for the selected date range of ${formatDate(range.start)} to ${formatDate(range.end)}.`;
     const warnings: string[] = [];
     if (failures > 0) {
       warnings.push(`${failures.toLocaleString()} app configuration(s) could not be read and are excluded from chart counts. Details are shown on the affected app cards.`);
@@ -319,7 +382,7 @@ async function runReport(): Promise<void> {
     emptyState.hidden = true;
     updateCharts();
     if (configurations.length === 0) {
-      showNotice("No matching apps", "No Instant Apps were found in the mining dataset for this date range. Try a wider date range.", "info");
+      showNotice("No matching apps", `No ${appScope} were found in the mining dataset for this date range. Try a wider date range.`, "info");
     }
   } catch (error) {
     configurations = [];
@@ -337,6 +400,7 @@ async function runReport(): Promise<void> {
     runButton.loading = false;
     runButton.disabled = false;
     datePicker.disabled = false;
+    featureSelector.disabled = false;
     cancelButton.hidden = true;
     progress.hidden = true;
   }

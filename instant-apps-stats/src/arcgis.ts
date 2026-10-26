@@ -50,9 +50,11 @@ export async function searchApps(
   range: DateRange,
   signal: AbortSignal,
   onProgress: (count: number, total: number) => void,
+  template?: "nearby",
 ): Promise<SearchResult> {
   const bounds = dateBounds(range);
-  const where = `Url like '%/instant/%' AND (CreatedTime >= '${bounds.start}' AND CreatedTime <= '${bounds.end}')`;
+  const urlPattern = template === "nearby" ? "%/instant/nearby/%" : "%/instant/%";
+  const where = `Url like '${urlPattern}' AND (CreatedTime >= '${bounds.start}' AND CreatedTime <= '${bounds.end}')`;
   const ids = await request(MINING_QUERY_URL, { where, returnIdsOnly: "true" }, signal);
   if (
     !isRecord(ids) || !Array.isArray(ids.objectIds) ||

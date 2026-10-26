@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
-import { aggregate, dateBounds, defaultRange, FEATURES, isFeatureEnabled, templateFor, templateLabel, TEMPLATES } from "./report";
+import { aggregate, aggregateChoices, dateBounds, defaultRange, FEATURES, getFeatureChoice, isFeatureEnabled, matchesFeature, queryTemplateForFeatures, templateFor, templateLabel, TEMPLATES } from "./report";
 import type { AppConfiguration, FeatureDefinition } from "./report";
+
+describe("query template selection", () => {
+  it("restricts only a sole Nearby Search Method selection", () => {
+    expect(queryTemplateForFeatures(["enableBufferSearch"])).toBe("nearby");
+    expect(queryTemplateForFeatures([])).toBeUndefined();
+    expect(queryTemplateForFeatures(["legend"])).toBeUndefined();
+    expect(queryTemplateForFeatures(["enableBufferSearch", "legend"])).toBeUndefined();
+    expect(queryTemplateForFeatures(["legend", "enableBufferSearch"])).toBeUndefined();
+  });
+});
 
 describe("date ranges", () => {
   it("matches the original October 5–6 report's October 6–7 UTC query", () => {
@@ -146,5 +156,100 @@ describe("configuration aggregation", () => {
     expect(isFeatureEnabled({ firstAlias: "true", secondAlias: 1 }, "sidebar", definition)).toBe(false);
     expect(isFeatureEnabled({ secondAlias: true }, "basic", definition)).toBe(false);
     expect(isFeatureEnabled({}, "sidebar", definition)).toBe(false);
+  });
+
+  const searchMethod = FEATURES.find((feature) => feature.key === "enableBufferSearch")!;
+
+  it.each([
+    [{ enableBufferSearch: { branchValue: "search-radius" } }, true],
+    [{ enableBufferSearch: { branchValue: "search-extent" } }, false],
+    [{}, false],
+    [{ enableBufferSearch: {} }, false],
+    [{ enableBufferSearch: { branchValue: "other" } }, false],
+    [{ enableBufferSearch: { branchValue: "SEARCH-RADIUS" } }, false],
+    [{ enableBufferSearch: { branchValue: true } }, false],
+    [{ enableBufferSearch: { branchValue: null } }, false],
+    [{ enableBufferSearch: null }, false],
+    [{ enableBufferSearch: [] }, false],
+    [{ enableBufferSearch: true }, false],
+    [{ enableBufferSearch: false }, false],
+    [{ enableBufferSearch: "search-radius" }, false],
+    [{ branchValue: "search-radius" }, false],
+  ])("matches only a recognized, saved non-default Nearby choice: %j", (values, expected) => {
+    expect(matchesFeature(values, "nearby", searchMethod)).toBe(expected);
+  });
+
+  it("limits modified counts and denominators to readable Nearby configurations", () => {
+    expect(aggregate([
+      app("nearby", { enableBufferSearch: { branchValue: "search-radius" } }),
+      app("nearby", { enableBufferSearch: { branchValue: "search-extent" } }),
+      app("nearby", {}),
+      app("nearby", { enableBufferSearch: { branchValue: "unexpected" } }),
+      app("nearby", null),
+      app("sidebar", { enableBufferSearch: { branchValue: "search-radius" } }),
+      app("unknown", { enableBufferSearch: { branchValue: "search-radius" } }),
+    ], "enableBufferSearch")).toEqual([{ template: "nearby", count: 1, total: 4 }]);
+    expect(matchesFeature(
+      { enableBufferSearch: { branchValue: "search-radius" } }, "sidebar", searchMethod,
+    )).toBe(false);
+    expect(aggregate([], "enableBufferSearch")).toEqual([{ template: "nearby", count: 0, total: 0 }]);
+  });
+
+  it("uses the same predicate for counts and app lists and retains the saved choice", () => {
+    const apps = [
+      app("nearby", { enableBufferSearch: { branchValue: "search-radius" } }),
+      app("nearby", { enableBufferSearch: { branchValue: "search-extent" } }),
+      app("nearby", {}),
+      app("nearby", null),
+      app("basic", { enableBufferSearch: { branchValue: "search-radius" } }),
+    ];
+    const matches = apps.filter(({ item, values }) =>
+      values !== null && matchesFeature(values, item.template, searchMethod));
+    expect(matches).toHaveLength(aggregate(apps, "enableBufferSearch")[0].count);
+    expect(getFeatureChoice(matches[0].values!, searchMethod)).toBe("search-radius");
+    expect(apps[0].values).toEqual({ enableBufferSearch: { branchValue: "search-radius" } });
+  });
+
+  it("distributes saved Nearby choices without inferring missing values as the default", () => {
+    const apps = [
+      app("nearby", { enableBufferSearch: { branchValue: "search-radius" } }),
+      app("nearby", { enableBufferSearch: { branchValue: "search-radius" } }),
+      app("nearby", { enableBufferSearch: { branchValue: "search-extent" } }),
+      app("nearby", {}),
+      app("nearby", { enableBufferSearch: { branchValue: "unexpected" } }),
+      app("nearby", { enableBufferSearch: true }),
+      app("nearby", null),
+      app("basic", { enableBufferSearch: { branchValue: "search-extent" } }),
+      app("unknown", { enableBufferSearch: { branchValue: "search-radius" } }),
+    ];
+    expect(aggregateChoices(apps, searchMethod)).toEqual([
+      { value: "search-radius", count: 2, total: 6 },
+      { value: "search-extent", count: 1, total: 6 },
+    ]);
+    expect(aggregate(apps, "enableBufferSearch")).toEqual([
+      { template: "nearby", count: 2, total: 6 },
+    ]);
+    expect(apps[3].values).toEqual({});
+  });
+
+  it("keeps both search modes visible with zero counts when no saved choices match", () => {
+    for (const apps of [[], [app("nearby", null)], [app("sidebar", {})]]) {
+      expect(aggregateChoices(apps, searchMethod)).toEqual([
+        { value: "search-radius", count: 0, total: 0 },
+        { value: "search-extent", count: 0, total: 0 },
+      ]);
+    }
+    expect(aggregateChoices([app("nearby", {})], searchMethod)).toEqual([
+      { value: "search-radius", count: 0, total: 1 },
+      { value: "search-extent", count: 0, total: 1 },
+    ]);
+  });
+
+  it("preserves boolean and alternate-key rules through the shared predicate", () => {
+    const legend = FEATURES.find((feature) => feature.key === "legend")!;
+    expect(matchesFeature({ legendPanel: true }, "sidebar", legend)).toBe(true);
+    expect(matchesFeature({ legendPanel: true }, "basic", legend)).toBe(false);
+    expect(matchesFeature({ legend: "true" }, "nearby", legend)).toBe(false);
+    expect(matchesFeature({ legend: true }, "nearby", legend)).toBe(true);
   });
 });

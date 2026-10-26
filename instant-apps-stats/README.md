@@ -13,9 +13,36 @@ npm run dev
 
 Open the local URL printed by Vite. The app starts with blank dates and does not fetch report data until you choose both a start and end date and select **Run Report**. Use **Chart Options** to compare configuration settings without fetching the data again.
 
-The Calcite multi-select combobox filters options as you type. Select multiple features to create a labeled Calcite chart tab for each; each tab includes its own totals and chart-data table. Removing a feature removes its tab, and clearing the selection displays a prompt. Selections persist when running a new report, and changing selections does not refetch data.
+The Calcite multi-select combobox filters options as you type. Select multiple features to create a labeled Calcite chart tab for each; each tab includes its own totals and chart-data table. Removing a feature removes its tab, and clearing the selection displays a prompt. Selections persist when running a new report, and changing selections does not automatically refetch data.
+
+Select **Nearby Search Method** as the only option before choosing **Run Report**
+to query only Nearby apps and read only their configurations. Mixed selections,
+other options, or no selection query all Instant Apps templates. Results,
+pagination, and result totals reflect the query scope. If you add another
+option after a Nearby-only report, charts prompt you to run the report again
+instead of displaying incomplete all-template counts. Switching back to only
+Nearby Search Method restores the existing charts without refetching.
 
 Under **View chart data**, expand a template's **Enabled** count to see links only to apps with that tab's feature explicitly enabled, including those beyond the visible result cards. The list uses the same primary/alternate-key rules as the chart; disabled, missing, and unreadable settings are excluded. **Readable apps** remains the total number of readable configurations, not a list of matches. Links open in a new tab.
+
+For **Nearby Search Method**, expand the **Modified** count instead. This table
+contains only Nearby apps and counts saved `search-radius` choices, which differ
+from the `search-extent` default. Each matching app link shows its saved choice.
+Its **Readable apps** denominator includes all readable Nearby configurations,
+including those with missing or unrecognized choices; other templates and
+unreadable configurations are excluded.
+
+The tab leads with a **Saved search-mode distribution** donut chart instead of
+a single-bar modified-count chart, followed by a
+**View distribution data** table comparing explicitly saved `search-radius`
+and `search-extent` values. Both modes remain visible even when their count is
+zero, and the table identifies `search-extent` as the default. The summary
+and donut legend show counts; legend percentages use only recognized saved
+choices, not all readable apps. An empty ring indicates no recognized saved
+choices. The summary also
+reports how many readable Nearby apps have missing or unrecognized choices.
+Those apps remain in the readable denominator but are not assigned to either
+mode; missing values are not inferred as the default.
 
 The Stats area scrolls within the selected chart tab, keeping the tabs visible
 when chart data or app lists are expanded. On narrow screens, scroll down to
@@ -53,7 +80,12 @@ source `index.html` directly: browsers cannot run its TypeScript entry point.
 - Intentionally preserves the original report's **displayed-date behavior**: each selected calendar date becomes midnight UTC on the following date, with inclusive start and end endpoints. For example, displayed October 5–6, 2026 queries October 6 at 00:00 UTC through October 7 at 00:00 UTC, matching the original's 280 records. This is not a full-day local-calendar range. A same-date range matches only the corresponding UTC instant.
 - Retrieves all matching mining record IDs, then fetches records in batches of 100 (keeping request URLs within the service's length limit) and checks that every requested record was returned. There is no 10,000-record search cap. Separate mining records are retained even if they reference the same app, matching the original report.
 - Reads item configurations with up to eight concurrent requests. Requests time out after 30 seconds; reports can be canceled.
-- Reads settings from each item's `values` object. Only explicitly stored boolean `true` values count as enabled. A feature's primary key or either of its template-specific alternate keys can enable it, even when another key is explicitly `false`. Each app counts once per feature. Defaults supplied by individual app templates are **not inferred**, so these are saved-configuration counts, not guaranteed runtime-feature counts.
+- Reads settings from each item's `values` object. For boolean features, only explicitly stored boolean `true` values count as enabled. A feature's primary key or either of its template-specific alternate keys can enable it, even when another key is explicitly `false`. Each app counts once per feature. Boolean defaults supplied by individual app templates are **not inferred**, so these are saved-configuration counts, not guaranteed runtime-feature counts.
+- For **Nearby Search Method**, reads `values.enableBufferSearch.branchValue`.
+  Only Nearby apps with the recognized non-default value `search-radius`
+  count as modified. The confirmed default is `search-extent`; saving that
+  value does not count. Missing, malformed, or unrecognized values do not count
+  as modifications. This measures the current saved value, not edit history.
 - Preserves zero-count templates, identifies templates from app URLs or item keywords, and includes unrecognized templates as `unknown`.
 - Lists unreadable configurations with their errors and excludes them from the chart denominator, but retains them in the result count. The mining dataset can contain items that are no longer publicly readable; partial configuration reports are clearly labeled.
 - Displays `TemplateOwner` as **Template owner**, matching the original dataset's owner field. The mining dataset does not supply the app's current title or owner.
@@ -108,11 +140,33 @@ Only edit entries inside these lists. Leave the surrounding `[` and `]`, the
    [Template-specific feature keys](#template-specific-feature-keys-optional)
    below instead of adding a second feature.
 
-**Counting rule:** the saved setting must be the boolean `true` inside the
+**Boolean counting rule:** the saved setting must be the boolean `true` inside the
 app's configuration `values` object. `false`, missing settings, the text
 `"true"`, and numeric values do not count as enabled. A feature may be enabled
 by an app's default behavior but still show zero here if it was not explicitly
 saved. Adding a feature does not change any apps or their settings.
+
+### Add a non-boolean choice setting
+
+Use the existing Nearby entry as the pattern for settings with a nested choice:
+
+```ts
+{
+  key: "enableBufferSearch",
+  label: "Nearby Search Method",
+  type: "choice",
+  template: "nearby",
+  property: "branchValue",
+  choices: ["search-radius", "search-extent"],
+  defaultValue: "search-extent",
+},
+```
+
+`key` identifies the saved object inside `values`; `property` identifies its
+choice field. Confirm the template, recognized choices, and default before
+adding another entry. Only recognized saved values different from
+`defaultValue` count. The chart, denominator, and expandable matching-app list
+are restricted to `template`. Existing boolean entries need no changes.
 
 ### Add a template
 

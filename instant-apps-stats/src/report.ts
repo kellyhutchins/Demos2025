@@ -1,8 +1,21 @@
-export interface FeatureDefinition {
+interface BooleanFeatureDefinition {
   key: string;
   label: string;
+  type?: "boolean";
   altKeys?: Readonly<Record<string, readonly [string] | readonly [string, string]>>;
 }
+
+interface ChoiceFeatureDefinition {
+  key: string;
+  label: string;
+  type: "choice";
+  template: string;
+  property: string;
+  choices: readonly string[];
+  defaultValue: string;
+}
+
+export type FeatureDefinition = BooleanFeatureDefinition | ChoiceFeatureDefinition;
 
 export const FEATURES = [
   { key: "enableFilter", label: "Attribute Filter" },
@@ -24,6 +37,15 @@ export const FEATURES = [
   { key: "mapArea", label: "Map Area" },
   { key: "mapZoom", label: "Map Zoom" },
   { key: "orientedImagery", label: "Oriented imagery" },
+  {
+    key: "enableBufferSearch",
+    label: "Nearby Search Method",
+    type: "choice",
+    template: "nearby",
+    property: "branchValue",
+    choices: ["search-radius", "search-extent"],
+    defaultValue: "search-extent",
+  },
   { key: "search", label: "Search" },
   {key: "sketch", label: "Sketch"},
   { key: "swipe", label: "Swipe" },
@@ -31,6 +53,10 @@ export const FEATURES = [
 ] as const satisfies readonly FeatureDefinition[];
 
 export type FeatureKey = (typeof FEATURES)[number]["key"];
+
+export function queryTemplateForFeatures(features: readonly FeatureKey[]): "nearby" | undefined {
+  return features.length === 1 && features[0] === "enableBufferSearch" ? "nearby" : undefined;
+}
 
 export const TEMPLATES = [
   { key: "countdown", label: "Countdown" },
@@ -85,6 +111,12 @@ export interface DateRange {
 
 export interface ChartRow {
   template: string;
+  count: number;
+  total: number;
+}
+
+export interface ChoiceChartRow {
+  value: string;
   count: number;
   total: number;
 }
@@ -155,27 +187,64 @@ export function templateFor(item: Record<string, unknown>): string {
 export function isFeatureEnabled(
   values: Record<string, unknown>,
   template: string,
-  feature: FeatureDefinition,
+  feature: BooleanFeatureDefinition,
 ): boolean {
   return values[feature.key] === true ||
     (feature.altKeys?.[template]?.some((key) => values[key] === true) ?? false);
 }
 
+export function getFeatureChoice(
+  values: Record<string, unknown>,
+  feature: ChoiceFeatureDefinition,
+): string | undefined {
+  const setting = values[feature.key];
+  const value = isRecord(setting) ? setting[feature.property] : undefined;
+  return typeof value === "string" && feature.choices.includes(value) ? value : undefined;
+}
+
+export function matchesFeature(
+  values: Record<string, unknown>,
+  template: string,
+  feature: FeatureDefinition,
+): boolean {
+  if (feature.type !== "choice") return isFeatureEnabled(values, template, feature);
+  if (template !== feature.template) return false;
+  const value = getFeatureChoice(values, feature);
+  return value !== undefined && value !== feature.defaultValue;
+}
+
+export function aggregateChoices(
+  apps: AppConfiguration[],
+  feature: ChoiceFeatureDefinition,
+): ChoiceChartRow[] {
+  const counts = new Map(feature.choices.map((value) => [value, 0]));
+  let total = 0;
+  for (const app of apps) {
+    if (app.values === null || app.item.template !== feature.template) continue;
+    total++;
+    const value = getFeatureChoice(app.values, feature);
+    if (value !== undefined) counts.set(value, counts.get(value)! + 1);
+  }
+  return feature.choices.map((value) => ({ value, count: counts.get(value)!, total }));
+}
+
 export function aggregate(apps: AppConfiguration[], feature: FeatureKey): ChartRow[] {
-  const definition = FEATURES.find(({ key }) => key === feature)!;
+  const definition: FeatureDefinition = FEATURES.find(({ key }) => key === feature)!;
   const rows = new Map<string, ChartRow>(
-    TEMPLATES.map(({ key }) => [key, { template: key, count: 0, total: 0 }]),
+    TEMPLATES.filter(({ key }) => definition.type !== "choice" || key === definition.template)
+      .map(({ key }) => [key, { template: key, count: 0, total: 0 }]),
   );
   for (const app of apps) {
     if (app.values === null) continue;
     const template = app.item.template;
+    if (definition.type === "choice" && template !== definition.template) continue;
     let row = rows.get(template);
     if (!row) {
       row = { template, count: 0, total: 0 };
       rows.set(template, row);
     }
     row.total++;
-    if (isFeatureEnabled(app.values, template, definition)) row.count++;
+    if (matchesFeature(app.values, template, definition)) row.count++;
   }
   return [...rows.values()];
 }
