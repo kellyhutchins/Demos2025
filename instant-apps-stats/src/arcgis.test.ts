@@ -52,21 +52,21 @@ describe("mining dataset queries", () => {
     });
   });
 
-  it("restricts the mining query to Nearby before loading configurations", async () => {
-    const nearbyFeature = feature(1);
-    nearbyFeature.attributes.Url = "https://www.arcgis.com/apps/instant/nearby/index.html?appid=" + item.id;
-    nearbyFeature.attributes.Type = "instant/nearby";
+  it.each(["nearby", "lookup"] as const)("restricts the mining query to %s before loading configurations", async (template) => {
+    const scopedFeature = feature(1);
+    scopedFeature.attributes.Url = `https://www.arcgis.com/apps/instant/${template}/index.html?appid=${item.id}`;
+    scopedFeature.attributes.Type = `instant/${template}`;
     const fetcher = vi.fn()
       .mockResolvedValueOnce(Response.json({ objectIds: [1] }))
-      .mockResolvedValueOnce(Response.json({ features: [nearbyFeature] }))
+      .mockResolvedValueOnce(Response.json({ features: [scopedFeature] }))
       .mockResolvedValueOnce(Response.json({ values: {} }));
     vi.stubGlobal("fetch", fetcher);
-    const result = await searchApps(range, new AbortController().signal, vi.fn(), "nearby");
+    const result = await searchApps(range, new AbortController().signal, vi.fn(), template);
     expect(new URL(fetcher.mock.calls[0][0]).searchParams.get("where")).toBe(
-      "Url like '%/instant/nearby/%' AND (CreatedTime >= '1791849600000' AND CreatedTime <= '1792540800000')",
+      `Url like '%/instant/${template}/%' AND (CreatedTime >= '1791849600000' AND CreatedTime <= '1792540800000')`,
     );
     expect(result.items).toHaveLength(1);
-    expect(result.items[0].template).toBe("nearby");
+    expect(result.items[0].template).toBe(template);
     await loadConfigurations(result.items, new AbortController().signal, vi.fn());
     expect(fetcher).toHaveBeenCalledTimes(3);
     expect(new URL(fetcher.mock.calls[2][0]).pathname).toBe(`/sharing/rest/content/items/${item.id}/data`);

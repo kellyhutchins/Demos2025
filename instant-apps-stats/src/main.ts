@@ -18,8 +18,8 @@ import "@esri/calcite-components/calcite/calcite.css";
 import "./style.css";
 import { errorMessage, loadConfigurations, searchApps } from "./arcgis";
 import { renderChart, renderChoiceChart } from "./chart";
-import { aggregate, aggregateChoices, FEATURES, formatDate, getFeatureChoice, matchesFeature, queryTemplateForFeatures, templateLabel } from "./report";
-import type { AppConfiguration, AppItem, FeatureDefinition, FeatureKey } from "./report";
+import { aggregate, aggregateChoices, choiceLabel, FEATURES, formatDate, getFeatureChoice, matchesFeature, queryTemplateForFeatures, templateLabel } from "./report";
+import type { AppConfiguration, AppItem, FeatureDefinition, FeatureKey, QueryTemplate } from "./report";
 
 setAssetPath(`${import.meta.env.BASE_URL}calcite/`);
 
@@ -65,7 +65,9 @@ document.querySelector<HTMLDivElement>("#app")!.innerHTML = `
             template-specific alternate keys. Each app counts once per feature.
             Nearby Search Method counts only Nearby apps saving <code>search-radius</code>
             instead of the <code>search-extent</code> default.
-            Select only Nearby Search Method before running to fetch only Nearby apps.
+            Lookup Search Method counts only Zone Lookup apps saving
+            "Features within a zone" instead of the "For a zone" default.
+            Select either search method alone before running to fetch only its app template.
             Mixed selections fetch all templates.
             Missing settings and unreadable configurations are not counted as matches.</p>
         </calcite-block>
@@ -117,7 +119,7 @@ let selectedFeatures: FeatureKey[] = [];
 let activeFeature: FeatureKey | undefined ;
 let reportReady = false;
 let configurations: AppConfiguration[] = [];
-let reportTemplate: "nearby" | undefined;
+let reportTemplate: QueryTemplate | undefined;
 let renderedCount = 0;
 let controller: AbortController | undefined;
 
@@ -182,14 +184,17 @@ function renderMoreResults(): void {
 
 function updateCharts(): void {
   if (reportReady) {
-    const needsBroaderData = reportTemplate === "nearby" &&
-      selectedFeatures.some((key) => key !== "enableBufferSearch");
+    const needsBroaderData = reportTemplate !== undefined &&
+      selectedFeatures.some((key) => {
+        const feature: FeatureDefinition = FEATURES.find((entry) => entry.key === key)!;
+        return feature.type !== "choice" || feature.template !== reportTemplate;
+      });
     emptyState.hidden = !needsBroaderData;
-    if (needsBroaderData) {
+    if (needsBroaderData && reportTemplate !== undefined) {
       chartTabs.hidden = true;
       selectionEmpty.hidden = true;
       emptyState.querySelector("p")!.textContent =
-        "This report contains only Nearby apps. Select Run Report again to fetch all templates for your selected options.";
+        `This report contains only ${templateLabel(reportTemplate)} apps. Select Run Report again to fetch data for your selected options.`;
       return;
     }
   }
@@ -240,7 +245,7 @@ function updateCharts(): void {
     const enabled = rows.reduce((sum, row) => sum + row.count, 0);
     const readable = rows.reduce((sum, row) => sum + row.total, 0);
     chartSummary.textContent = feature.type === "choice"
-      ? `${enabled.toLocaleString()} of ${readable.toLocaleString()} readable ${templateLabel(feature.template)} apps have ${feature.label} modified from the ${feature.defaultValue} default. Only recognized, explicitly saved non-default values count.`
+      ? `${enabled.toLocaleString()} of ${readable.toLocaleString()} readable ${templateLabel(feature.template)} apps have ${feature.label} modified from the ${choiceLabel(feature, feature.defaultValue)} default. Only recognized, explicitly saved non-default values count.`
       : `${enabled.toLocaleString()} of ${readable.toLocaleString()} readable apps have ${feature.label} explicitly enabled.`;
     for (const row of rows) {
       const tr = document.createElement("tr");
@@ -270,8 +275,9 @@ function updateCharts(): void {
             const entry = document.createElement("li");
             const status = document.createElement("span");
             status.className = "feature-status";
-            status.textContent = feature.type === "choice"
-              ? `${feature.label}: ${getFeatureChoice(app.values, feature)} (modified)`
+            const choice = feature.type === "choice" ? getFeatureChoice(app.values, feature) : undefined;
+            status.textContent = choice !== undefined
+              ? `${feature.label}: ${choiceLabel(feature, choice)} (modified)`
               : `${feature.label} enabled`;
             entry.append(appLink(app.item, app.item.id), status);
             list.append(entry);
@@ -308,7 +314,8 @@ function updateCharts(): void {
         const tr = document.createElement("tr");
         const name = document.createElement("th");
         name.scope = "row";
-        name.textContent = row.value === feature.defaultValue ? `${row.value} (default)` : row.value;
+        const label = choiceLabel(feature, row.value);
+        name.textContent = row.value === feature.defaultValue ? `${label} (default)` : label;
         const count = document.createElement("td");
         count.textContent = row.count.toLocaleString();
         const total = document.createElement("td");
@@ -338,7 +345,7 @@ async function runReport(): Promise<void> {
   }
   const range = { start: dates[0], end: dates[1] };
   const template = queryTemplateForFeatures(selectedFeatures);
-  const appScope = template === "nearby" ? "Nearby apps" : "Instant Apps";
+  const appScope = template ? `${templateLabel(template)} apps` : "Instant Apps";
   const current = new AbortController();
   controller = current;
   runButton.loading = true;
@@ -371,7 +378,7 @@ async function runReport(): Promise<void> {
     current.signal.throwIfAborted();
     reportTemplate = template;
     const failures = configurations.filter((app) => app.values === null).length;
-    resultSummary.textContent = `${configurations.length.toLocaleString()} ${template === "nearby" ? "Nearby app results" : "results"} returned for the selected date range of ${formatDate(range.start)} to ${formatDate(range.end)}.`;
+    resultSummary.textContent = `${configurations.length.toLocaleString()} ${template ? `${templateLabel(template)} app results` : "results"} returned for the selected date range of ${formatDate(range.start)} to ${formatDate(range.end)}.`;
     const warnings: string[] = [];
     if (failures > 0) {
       warnings.push(`${failures.toLocaleString()} app configuration(s) could not be read and are excluded from chart counts. Details are shown on the affected app cards.`);

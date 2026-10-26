@@ -1,14 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { aggregate, aggregateChoices, dateBounds, defaultRange, FEATURES, getFeatureChoice, isFeatureEnabled, matchesFeature, queryTemplateForFeatures, templateFor, templateLabel, TEMPLATES } from "./report";
+import { aggregate, aggregateChoices, choiceLabel, dateBounds, defaultRange, FEATURES, getFeatureChoice, isFeatureEnabled, matchesFeature, queryTemplateForFeatures, templateFor, templateLabel, TEMPLATES } from "./report";
 import type { AppConfiguration, FeatureDefinition } from "./report";
 
 describe("query template selection", () => {
-  it("restricts only a sole Nearby Search Method selection", () => {
+  it("restricts sole search-method selections to their respective templates", () => {
     expect(queryTemplateForFeatures(["enableBufferSearch"])).toBe("nearby");
+    expect(queryTemplateForFeatures(["enableSearchLayer"])).toBe("lookup");
     expect(queryTemplateForFeatures([])).toBeUndefined();
     expect(queryTemplateForFeatures(["legend"])).toBeUndefined();
     expect(queryTemplateForFeatures(["enableBufferSearch", "legend"])).toBeUndefined();
     expect(queryTemplateForFeatures(["legend", "enableBufferSearch"])).toBeUndefined();
+    expect(queryTemplateForFeatures(["enableSearchLayer", "legend"])).toBeUndefined();
+    expect(queryTemplateForFeatures(["legend", "enableSearchLayer"])).toBeUndefined();
+    expect(queryTemplateForFeatures(["enableBufferSearch", "enableSearchLayer"])).toBeUndefined();
+    expect(queryTemplateForFeatures(["enableSearchLayer", "enableBufferSearch"])).toBeUndefined();
   });
 });
 
@@ -159,6 +164,70 @@ describe("configuration aggregation", () => {
   });
 
   const searchMethod = FEATURES.find((feature) => feature.key === "enableBufferSearch")!;
+  const lookupSearchMethod = FEATURES.find((feature) => feature.key === "enableSearchLayer")!;
+
+  it("uses friendly Lookup labels without changing Nearby labels", () => {
+    expect(choiceLabel(lookupSearchMethod, "search-zone")).toBe("For a zone");
+    expect(choiceLabel(lookupSearchMethod, "search-layer")).toBe("Features within a zone");
+    expect(choiceLabel(searchMethod, "search-radius")).toBe("search-radius");
+    expect(choiceLabel(searchMethod, "search-extent")).toBe("search-extent");
+  });
+
+  it.each([
+    [{ enableSearchLayer: { branchValue: "search-zone", branchOptionsFieldNames: ["zoneLookupLayers", "spatialRelationshipZone", "mapClickLocation"] } }, false],
+    [{ enableSearchLayer: { branchValue: "search-layer" } }, true],
+    [{}, false],
+    [{ enableSearchLayer: {} }, false],
+    [{ enableSearchLayer: { branchValue: "other" } }, false],
+    [{ enableSearchLayer: { branchValue: "SEARCH-LAYER" } }, false],
+    [{ enableSearchLayer: { branchValue: true } }, false],
+    [{ enableSearchLayer: { branchValue: null } }, false],
+    [{ enableSearchLayer: null }, false],
+    [{ enableSearchLayer: [] }, false],
+    [{ enableSearchLayer: true }, false],
+    [{ enableSearchLayer: "search-layer" }, false],
+    [{ branchValue: "search-layer" }, false],
+  ])("matches only a recognized, saved non-default Lookup choice: %j", (values, expected) => {
+    expect(matchesFeature(values, "lookup", lookupSearchMethod)).toBe(expected);
+  });
+
+  it("limits Lookup distributions, modified counts and app lists to readable Lookup apps", () => {
+    const apps = [
+      app("lookup", { enableSearchLayer: { branchValue: "search-zone" } }),
+      app("lookup", { enableSearchLayer: { branchValue: "search-layer" } }),
+      app("lookup", { enableSearchLayer: { branchValue: "search-layer" } }),
+      app("lookup", {}),
+      app("lookup", { enableSearchLayer: { branchValue: "unexpected" } }),
+      app("lookup", { enableSearchLayer: true }),
+      app("lookup", null),
+      app("nearby", { enableSearchLayer: { branchValue: "search-layer" } }),
+      app("unknown", { enableSearchLayer: { branchValue: "search-layer" } }),
+    ];
+    expect(aggregateChoices(apps, lookupSearchMethod)).toEqual([
+      { value: "search-zone", count: 1, total: 6 },
+      { value: "search-layer", count: 2, total: 6 },
+    ]);
+    expect(aggregate(apps, "enableSearchLayer")).toEqual([{ template: "lookup", count: 2, total: 6 }]);
+    const matches = apps.filter(({ item, values }) =>
+      values !== null && matchesFeature(values, item.template, lookupSearchMethod));
+    expect(matches).toEqual([apps[1], apps[2]]);
+    expect(getFeatureChoice(matches[0].values!, lookupSearchMethod)).toBe("search-layer");
+    expect(apps[3].values).toEqual({});
+  });
+
+  it("retains both Lookup modes with zero counts without inferring the default", () => {
+    for (const apps of [[], [app("lookup", null)], [app("nearby", {})]]) {
+      expect(aggregateChoices(apps, lookupSearchMethod)).toEqual([
+        { value: "search-zone", count: 0, total: 0 },
+        { value: "search-layer", count: 0, total: 0 },
+      ]);
+      expect(aggregate(apps, "enableSearchLayer")).toEqual([{ template: "lookup", count: 0, total: 0 }]);
+    }
+    expect(aggregateChoices([app("lookup", {})], lookupSearchMethod)).toEqual([
+      { value: "search-zone", count: 0, total: 1 },
+      { value: "search-layer", count: 0, total: 1 },
+    ]);
+  });
 
   it.each([
     [{ enableBufferSearch: { branchValue: "search-radius" } }, true],

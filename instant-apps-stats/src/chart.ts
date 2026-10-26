@@ -1,5 +1,5 @@
 import type { ChartRow, ChoiceChartRow, FeatureDefinition } from "./report";
-import { templateLabel } from "./report";
+import { choiceLabel, templateLabel } from "./report";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 
@@ -34,7 +34,7 @@ export function renderChoiceChart(host: HTMLElement, rows: ChoiceChartRow[], fea
   svg.append(
     svgElement("title", { id: titleId }, `${feature.label}: saved-value distribution`),
     svgElement("desc", { id: descriptionId },
-      `${rows.map((row) => `${row.value}: ${row.count} apps (${percentage(row.count)})`).join(". ")}. Percentages include only recognized saved choices; missing or unrecognized choices are excluded.`),
+      `${rows.map((row) => `${choiceLabel(feature, row.value)}: ${row.count} apps (${percentage(row.count)})`).join(". ")}. Percentages include only recognized saved choices; missing or unrecognized choices are excluded.`),
     svgElement("circle", { cx: 293, cy: 105, r: 72, class: "donut-track" }),
   );
   let offset = 0;
@@ -49,12 +49,12 @@ export function renderChoiceChart(host: HTMLElement, rows: ChoiceChartRow[], fea
         transform: "rotate(-90 293 105)",
         class: `donut-segment ${colorClass}`,
       });
-      segment.append(svgElement("title", {}, `${row.value}: ${row.count.toLocaleString()} apps (${percentage(row.count)})`));
+      segment.append(svgElement("title", {}, `${choiceLabel(feature, row.value)}: ${row.count.toLocaleString()} apps (${percentage(row.count)})`));
       svg.append(segment);
     }
     offset += share;
     const label = feature.type === "choice" && row.value === feature.defaultValue
-      ? `${row.value} (default)` : row.value;
+      ? `${choiceLabel(feature, row.value)} (default)` : choiceLabel(feature, row.value);
     const y = 235 + index * 30;
     svg.append(
       svgElement("rect", { x: 100, y: y - 11, width: 12, height: 12, class: `donut-key ${colorClass}` }),

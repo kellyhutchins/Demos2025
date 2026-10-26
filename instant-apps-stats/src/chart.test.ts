@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { renderChoiceChart } from "./chart";
 import { FEATURES } from "./report";
+import type { ChoiceChartRow, FeatureDefinition } from "./report";
 
 class TestElement {
   attributes: Record<string, string> = {};
@@ -24,20 +25,24 @@ class TestElement {
 
 afterEach(() => vi.unstubAllGlobals());
 
+function renderSavedChoices(rows: ChoiceChartRow[], feature: FeatureDefinition): TestElement {
+  const host = new TestElement("div");
+  vi.stubGlobal("document", {
+    createElement: () => host,
+    createElementNS: (_namespace: string, tag: string) => new TestElement(tag),
+  });
+  renderChoiceChart(document.createElement("div"), rows, feature);
+  return host.children[0];
+}
+
 describe("saved-choice donut chart", () => {
   const feature = FEATURES.find(({ key }) => key === "enableBufferSearch")!;
 
   function render(radius: number, extent: number, readable = radius + extent): TestElement {
-    const host = new TestElement("div");
-    vi.stubGlobal("document", {
-      createElement: () => host,
-      createElementNS: (_namespace: string, tag: string) => new TestElement(tag),
-    });
-    renderChoiceChart(document.createElement("div"), [
+    return renderSavedChoices([
       { value: "search-radius", count: radius, total: readable },
       { value: "search-extent", count: extent, total: readable },
     ], feature);
-    return host.children[0];
   }
 
   it("uses recognized saved choices for slice sizes and percentages, not all readable apps", () => {
@@ -66,4 +71,33 @@ describe("saved-choice donut chart", () => {
     expect(text).toContain("search-radius");
     expect(text).toContain("search-extent (default)");
   });
+});
+
+describe("Lookup saved-choice donut chart", () => {
+  const feature = FEATURES.find(({ key }) => key === "enableSearchLayer")!;
+
+  it.each([[1, 3], [0, 0], [5, 0], [0, 5]])(
+    "shows friendly labels, the zone default and accurate shares (%i, %i)",
+    (zone, layer) => {
+      const svg = renderSavedChoices([
+        { value: "search-zone", count: zone, total: zone + layer + 2 },
+        { value: "search-layer", count: layer, total: zone + layer + 2 },
+      ], feature);
+      const text = svg.children.map((child) => child.textContent).join(" ");
+      expect(text).toContain("For a zone (default)");
+      expect(text).toContain("Features within a zone");
+      expect(text).not.toContain("Features within a zone (default)");
+      expect(text).not.toMatch(/search-zone|search-layer|NaN|Infinity/);
+      const segments = svg.children.filter((child) => child.attributes.class?.startsWith("donut-segment"));
+      expect(segments).toHaveLength(Number(zone > 0) + Number(layer > 0));
+      expect(segments.map((segment) => segment.attributes["stroke-dasharray"])).toEqual(
+        zone && layer ? ["25 75", "75 25"] : zone + layer ? ["100 0"] : [],
+      );
+      expect(svg.children.find((child) => child.tag === "desc")?.textContent).toContain("For a zone");
+      for (const segment of segments) {
+        expect(segment.children[0].textContent).toMatch(/^(For a zone|Features within a zone):/);
+      }
+      if (!zone && !layer) expect(text).toContain("No saved choices");
+    },
+  );
 });

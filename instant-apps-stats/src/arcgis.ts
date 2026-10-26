@@ -1,5 +1,5 @@
 import { dateBounds, isRecord, templateFor } from "./report";
-import type { AppConfiguration, AppItem, DateRange } from "./report";
+import type { AppConfiguration, AppItem, DateRange, QueryTemplate } from "./report";
 
 const REST_URL = "https://www.arcgis.com/sharing/rest";
 const MINING_QUERY_URL = "https://services.arcgis.com/V6ZHFr6zdgNZuVG0/arcgis/rest/services/TemplateAppMining_1/FeatureServer/0/query";
@@ -50,10 +50,10 @@ export async function searchApps(
   range: DateRange,
   signal: AbortSignal,
   onProgress: (count: number, total: number) => void,
-  template?: "nearby",
+  template?: QueryTemplate,
 ): Promise<SearchResult> {
   const bounds = dateBounds(range);
-  const urlPattern = template === "nearby" ? "%/instant/nearby/%" : "%/instant/%";
+  const urlPattern = template ? `%/instant/${template}/%` : "%/instant/%";
   const where = `Url like '${urlPattern}' AND (CreatedTime >= '${bounds.start}' AND CreatedTime <= '${bounds.end}')`;
   const ids = await request(MINING_QUERY_URL, { where, returnIdsOnly: "true" }, signal);
   if (

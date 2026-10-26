@@ -5,13 +5,16 @@ interface BooleanFeatureDefinition {
   altKeys?: Readonly<Record<string, readonly [string] | readonly [string, string]>>;
 }
 
+export type QueryTemplate = "nearby" | "lookup";
+
 interface ChoiceFeatureDefinition {
   key: string;
   label: string;
   type: "choice";
-  template: string;
+  template: QueryTemplate;
   property: string;
   choices: readonly string[];
+  choiceLabels?: Readonly<Record<string, string>>;
   defaultValue: string;
 }
 
@@ -34,6 +37,19 @@ export const FEATURES = [
   { key: "languageSwitcher", label: "Language Switcher" },
   { key: "layerList", label: "Layer List" },
   { key: "legend", label: "Legend", altKeys: { sidebar: ["legendPanel"] } },
+  {
+    key: "enableSearchLayer",
+    label: "Lookup Search Method",
+    type: "choice",
+    template: "lookup",
+    property: "branchValue",
+    choices: ["search-zone", "search-layer"],
+    choiceLabels: {
+      "search-zone": "For a zone",
+      "search-layer": "Features within a zone",
+    },
+    defaultValue: "search-zone",
+  },
   { key: "mapArea", label: "Map Area" },
   { key: "mapZoom", label: "Map Zoom" },
   { key: "orientedImagery", label: "Oriented imagery" },
@@ -54,8 +70,14 @@ export const FEATURES = [
 
 export type FeatureKey = (typeof FEATURES)[number]["key"];
 
-export function queryTemplateForFeatures(features: readonly FeatureKey[]): "nearby" | undefined {
-  return features.length === 1 && features[0] === "enableBufferSearch" ? "nearby" : undefined;
+export function queryTemplateForFeatures(features: readonly FeatureKey[]): QueryTemplate | undefined {
+  const feature: FeatureDefinition | undefined = features.length === 1
+    ? FEATURES.find(({ key }) => key === features[0]) : undefined;
+  return feature?.type === "choice" ? feature.template : undefined;
+}
+
+export function choiceLabel(feature: FeatureDefinition, value: string): string {
+  return feature.type === "choice" ? feature.choiceLabels?.[value] ?? value : value;
 }
 
 export const TEMPLATES = [

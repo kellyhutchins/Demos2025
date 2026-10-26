@@ -15,13 +15,15 @@ Open the local URL printed by Vite. The app starts with blank dates and does not
 
 The Calcite multi-select combobox filters options as you type. Select multiple features to create a labeled Calcite chart tab for each; each tab includes its own totals and chart-data table. Removing a feature removes its tab, and clearing the selection displays a prompt. Selections persist when running a new report, and changing selections does not automatically refetch data.
 
-Select **Nearby Search Method** as the only option before choosing **Run Report**
-to query only Nearby apps and read only their configurations. Mixed selections,
+Select **Nearby Search Method** or **Lookup Search Method** as the only option
+before choosing **Run Report** to query only Nearby or Zone Lookup apps,
+respectively, and read only their configurations. Mixed selections,
 other options, or no selection query all Instant Apps templates. Results,
 pagination, and result totals reflect the query scope. If you add another
-option after a Nearby-only report, charts prompt you to run the report again
-instead of displaying incomplete all-template counts. Switching back to only
-Nearby Search Method restores the existing charts without refetching.
+option or switch search methods after a template-only report, charts prompt
+you to run the report again instead of displaying incomplete all-template
+counts. Switching back to only
+the original search method restores the existing charts without refetching.
 
 Under **View chart data**, expand a template's **Enabled** count to see links only to apps with that tab's feature explicitly enabled, including those beyond the visible result cards. The list uses the same primary/alternate-key rules as the chart; disabled, missing, and unreadable settings are excluded. **Readable apps** remains the total number of readable configurations, not a list of matches. Links open in a new tab.
 
@@ -43,6 +45,16 @@ choices. The summary also
 reports how many readable Nearby apps have missing or unrecognized choices.
 Those apps remain in the readable denominator but are not assigned to either
 mode; missing values are not inferred as the default.
+
+**Lookup Search Method** uses the same donut, distribution table, and
+**Modified** app-link drill-down for Zone Lookup apps. It reads
+`values.enableSearchLayer.branchValue` and displays `search-zone` as
+**For a zone (default)** and `search-layer` as **Features within a zone**.
+Only explicitly saved `search-layer` values count as modified. Missing,
+malformed, and unrecognized values remain in the readable denominator but
+are excluded from the donut; missing values are not inferred as **For a zone**.
+Labels are used consistently in the legend, tooltips, accessible description,
+distribution table, summaries, and app list.
 
 The Stats area scrolls within the selected chart tab, keeping the tabs visible
 when chart data or app lists are expanded. On narrow screens, scroll down to
@@ -86,6 +98,10 @@ source `index.html` directly: browsers cannot run its TypeScript entry point.
   count as modified. The confirmed default is `search-extent`; saving that
   value does not count. Missing, malformed, or unrecognized values do not count
   as modifications. This measures the current saved value, not edit history.
+- For **Lookup Search Method**, reads `values.enableSearchLayer.branchValue`
+  only for Zone Lookup apps. `search-zone` (**For a zone**) is the default;
+  only recognized, explicitly saved `search-layer` (**Features within a zone**)
+  values count as modified. `branchOptionsFieldNames` does not affect the count.
 - Preserves zero-count templates, identifies templates from app URLs or item keywords, and includes unrecognized templates as `unknown`.
 - Lists unreadable configurations with their errors and excludes them from the chart denominator, but retains them in the result count. The mining dataset can contain items that are no longer publicly readable; partial configuration reports are clearly labeled.
 - Displays `TemplateOwner` as **Template owner**, matching the original dataset's owner field. The mining dataset does not supply the app's current title or owner.
@@ -167,6 +183,10 @@ choice field. Confirm the template, recognized choices, and default before
 adding another entry. Only recognized saved values different from
 `defaultValue` count. The chart, denominator, and expandable matching-app list
 are restricted to `template`. Existing boolean entries need no changes.
+Use an optional `choiceLabels` map to display friendly names without changing
+the saved values used for counting, as in the Lookup entry. A sole choice
+selection also scopes the mining query to its template; when adding a choice
+for a new template, include that key in the `QueryTemplate` type.
 
 ### Add a template
 
