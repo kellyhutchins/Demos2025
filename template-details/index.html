@@ -9,35 +9,35 @@
 </head>
 
 <body>
-  <main class="app-panel">
-    <h1>ArcGIS Online Mining: <small>Public template details</small></h1>
-    <calcite-label>
-      Select a template
-      <calcite-select id="templateTypes"></calcite-select>
-    </calcite-label>
-    <p>Get count of selected template created in the last</p>
-    <div class="date-buttons" role="group" aria-label="Date periods">
-      <calcite-button type="button" data-duration="hour">Hour</calcite-button>
-      <calcite-button type="button" data-duration="day">Day</calcite-button>
-      <calcite-button type="button" data-duration="week">Week</calcite-button>
-      <calcite-button type="button" data-duration="month">Month</calcite-button>
-      <calcite-button type="button" data-duration="year">Year</calcite-button>
-    </div>
-    <p>Or specify a custom date/time period</p>
-    <div class="custom-dates">
-      <calcite-label layout="inline">Start
-        <input type="datetime-local" id="startDate" name="Start Date" required />
+  <calcite-panel heading="Arcgis Online Mining" description="Public template details" class="app-panel">
+    <calcite-block expanded expandable heading="Filter templates">
+      <calcite-label>Select a template
+        <calcite-select id="templateTypes"></calcite-select>
       </calcite-label>
-      <calcite-label layout="inline">End
-        <input type="datetime-local" id="endDate" name="End Date" required />
-      </calcite-label>
-      <calcite-button id="goDates">Go</calcite-button>
-    </div>
-    <calcite-loader id="loader" label="Loading template details" hidden></calcite-loader>
-    <calcite-notice id="queryError" kind="danger" icon="exclamation-mark-triangle">
-      <div slot="title">Unable to load template details</div>
-      <div slot="message" id="queryErrorMessage"></div>
-    </calcite-notice>
+      <p>Get count of selected template created in the last</p>
+      <div class="date-buttons" role="group" aria-label="Date periods">
+        <calcite-button type="button" data-duration="hour">Hour</calcite-button>
+        <calcite-button type="button" data-duration="day">Day</calcite-button>
+        <calcite-button type="button" data-duration="week">Week</calcite-button>
+        <calcite-button type="button" data-duration="month">Month</calcite-button>
+        <calcite-button type="button" data-duration="year">Year</calcite-button>
+      </div>
+      <p>Or specify a custom date/time period</p>
+      <div class="custom-dates">
+        <calcite-label layout="inline">Start
+          <input type="datetime-local" id="startDate" name="Start Date" required />
+        </calcite-label>
+        <calcite-label layout="inline">End
+          <input type="datetime-local" id="endDate" name="End Date" required />
+        </calcite-label>
+        <calcite-button id="goDates">Go</calcite-button>
+      </div>
+      <calcite-loader id="loader" label="Loading template details" hidden></calcite-loader>
+      <calcite-notice id="queryError" kind="danger" icon="exclamation-mark-triangle">
+        <div slot="title">Unable to load template details</div>
+        <div slot="message" id="queryErrorMessage"></div>
+      </calcite-notice>
+    </calcite-block>
     <p id="templateCountInfo" role="status"></p>
     <div class="table-container" id="templateDetailTable" aria-busy="false">
       <table hidden>
@@ -53,7 +53,7 @@
         <tbody id="templateRows"></tbody>
       </table>
     </div>
-  </main>
+  </calcite-panel>
 </body>
 
 </html>

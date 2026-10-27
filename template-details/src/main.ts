@@ -5,6 +5,8 @@ import "@esri/calcite-components/components/calcite-loader";
 import "@esri/calcite-components/components/calcite-notice";
 import "@esri/calcite-components/components/calcite-option";
 import "@esri/calcite-components/components/calcite-select";
+import "@esri/calcite-components/components/calcite-block";
+import "@esri/calcite-components/components/calcite-panel";
 import "@esri/calcite-components/main.css";
 import "../css/styles.css";
 
