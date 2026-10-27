@@ -5,6 +5,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Template Details</title>
+  <script type="module" blocking="render" src="https://js.arcgis.com/calcite-components/5.2"></script>
   <script type="module" src="./src/main.ts"></script>
 </head>
 
@@ -14,14 +15,13 @@
       <calcite-label>Select a template
         <calcite-select id="templateTypes"></calcite-select>
       </calcite-label>
-      <p>Get count of selected template created in the last</p>
-      <div class="date-buttons" role="group" aria-label="Date periods">
-        <calcite-button type="button" data-duration="hour">Hour</calcite-button>
-        <calcite-button type="button" data-duration="day">Day</calcite-button>
-        <calcite-button type="button" data-duration="week">Week</calcite-button>
-        <calcite-button type="button" data-duration="month">Month</calcite-button>
-        <calcite-button type="button" data-duration="year">Year</calcite-button>
-      </div>
+      <calcite-segmented-control id="segmentedControl"
+        label-text="Get a count of selected template created in the last">
+        <calcite-segmented-control-item value="hour">Hour</calcite-segmented-control-item>
+        <calcite-segmented-control-item value="day">Day</calcite-segmented-control-item>
+        <calcite-segmented-control-item value="week">Week</calcite-segmented-control-item>
+        <calcite-segmented-control-item value="month">Month</calcite-segmented-control-item>
+      </calcite-segmented-control>
       <p>Or specify a custom date/time period</p>
       <div class="custom-dates">
         <calcite-label layout="inline">Start

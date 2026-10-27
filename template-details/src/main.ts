@@ -7,6 +7,8 @@ import "@esri/calcite-components/components/calcite-option";
 import "@esri/calcite-components/components/calcite-select";
 import "@esri/calcite-components/components/calcite-block";
 import "@esri/calcite-components/components/calcite-panel";
+import "@esri/calcite-components/components/calcite-segmented-control";
+import "@esri/calcite-components/components/calcite-segmented-control-item";
 import "@esri/calcite-components/main.css";
 import "../css/styles.css";
 
@@ -56,7 +58,7 @@ const countInfo = requiredElement<HTMLParagraphElement>("#templateCountInfo");
 const container = requiredElement<HTMLDivElement>("#templateDetailTable");
 const table = requiredElement<HTMLTableElement>("table");
 const rows = requiredElement<HTMLTableSectionElement>("#templateRows");
-const buttons = document.querySelectorAll<HTMLCalciteButtonElement>("calcite-button");
+const segmentedControl = requiredElement<HTMLCalciteSegmentedControlElement>("#segmentedControl");
 
 for (const [index, template] of templates.entries()) {
   const option = document.createElement("calcite-option");
@@ -82,14 +84,7 @@ const templateData = new FeatureLayer({
   outFields: ["Url", "Configured", "Account", "TemplateOwner"]
 });
 
-function setLoading(loading: boolean): void {
-  loader.hidden = !loading;
-  container.setAttribute("aria-busy", String(loading));
-  select.disabled = loading;
-  for (const button of buttons) {
-    button.disabled = loading;
-  }
-}
+
 
 function showError(message: string): void {
   errorMessage.textContent = message;
@@ -146,7 +141,7 @@ async function getDataByDates(start: Date, end: Date): Promise<void> {
     showError("Select a template before running a query.");
     return;
   }
-  setLoading(true);
+
   try {
     await templateData.load();
     const query = templateData.createQuery();
@@ -179,20 +174,17 @@ async function getDataByDates(start: Date, end: Date): Promise<void> {
   } catch (error: unknown) {
     console.error("Template details query failed", error);
     showError(error instanceof Error ? error.message : "The query failed. Check your connection and access to the TemplateAppMining service.");
-  } finally {
-    setLoading(false);
   }
 }
 
 requiredElement<HTMLCalciteButtonElement>("#goDates").addEventListener("click", () => {
   void getDataByDates(new Date(startInput.value), new Date(endInput.value));
 });
-
-for (const button of document.querySelectorAll<HTMLCalciteButtonElement>("[data-duration]")) {
-  button.addEventListener("click", () => {
-    const end = new Date();
+segmentedControl.addEventListener("calciteSegmentedControlChange", (event) => {
+  const dateValue = segmentedControl.selectedItem.value;
+      const end = new Date();
     const start = new Date(end);
-    switch (button.dataset.duration) {
+    switch (dateValue) {
       case "hour": start.setTime(start.getTime() - 60 * 60 * 1000); break;
       case "day": start.setDate(start.getDate() - 1); break;
       case "week": start.setDate(start.getDate() - 7); break;
@@ -214,5 +206,5 @@ for (const button of document.querySelectorAll<HTMLCalciteButtonElement>("[data-
         return;
     }
     void getDataByDates(start, end);
-  });
-}
+ })
+
